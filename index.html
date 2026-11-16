@@ -40,6 +40,15 @@
   .cur::after{content:"\2588";color:var(--accent);animation:bl 1s steps(2) infinite}
   @keyframes bl{0%,50%{opacity:1}50.01%,100%{opacity:0}}
   .skip{position:fixed;bottom:10px;right:14px;color:var(--dim);font-size:11px}
+  .mail{color:var(--cyan);font-weight:700;cursor:default}
+  .mail.has{color:var(--amber);text-shadow:0 0 6px var(--amber)}
+  .qbar{display:flex;gap:6px;overflow-x:auto;padding:6px 12px;background:#0b110b;border-top:1px solid #162315;-webkit-overflow-scrolling:touch}
+  .qbar.hidden{display:none}
+  .qbar::-webkit-scrollbar{height:0}
+  .chip{flex:0 0 auto;background:#12210f;border:1px solid #244a1e;color:var(--fg);font-family:var(--font);font-size:13px;padding:7px 11px;border-radius:7px;cursor:pointer;white-space:nowrap}
+  .chip:active{background:#1d3a17}
+  .chip.go{background:#16351a;border-color:#2e7d32;color:var(--accent);font-weight:700}
+  .chip.next{background:#2a2410;border-color:#6b5212;color:var(--amber)}
   @media(max-width:700px){.mtitle{display:none}}
 </style>
 </head>
@@ -48,11 +57,13 @@
     <span class="brand">Term<span class="b">//</span>Hack</span>
     <span class="mtitle" id="mtitle"></span>
     <span class="right">
+      <span class="mail" id="mail" title="Inbox"></span>
       <span class="null" title="NULL's control of the internet">NULL <span class="bar"><i id="bar"></i></span> <span id="pct">88%</span></span>
       <span class="count" id="count"></span><span class="steps" id="steps"></span>
     </span>
   </div>
   <div class="screen" id="screen"></div>
+  <div class="qbar hidden" id="qbar"></div>
   <div class="promptrow hidden" id="promptrow"><span class="ps1" id="ps1"></span><input id="input" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
   <div class="skip" id="skip"></div>
 
@@ -132,7 +143,7 @@ const WEB={
 function cleanHost(h){return (h||"").replace(/^https?:\/\//,"").split("/")[0].split(":")[0];}
 function isAllowed(h){h=cleanHost(h);if(["localhost","scanme.nmap.org","null-c2.darknet","null-relay.lab","vuln-shop.lab"].includes(h))return true;if(h==="127.0.0.1")return true;if(/^10\.0\.2\.\d+$/.test(h))return true;if(["45.33.32.156","66.66.6.6"].includes(h))return true;return false;}
 const AP={essid:"CLUB-LAB-AP",bssid:"AA:BB:CC:DD:EE:01",ch:6,key:"club-wifi-2024"};
-const NEIGHBORS=[{essid:"Dragon-5G",bssid:"3C:1A:7F:22:90:B2",ch:11},{essid:"TP-LINK_0F3C",bssid:"50:C7:BF:4D:0F:3C",ch:1}];
+const NEIGHBORS=[{essid:"CoffeeShop-WiFi",bssid:"3C:1A:7F:22:90:B2",ch:11},{essid:"Apt-4B-Guest",bssid:"50:C7:BF:4D:0F:3C",ch:1}];
 
 /* ===================== Safety scenarios (Mission 6) ===================== */
 const SCEN=[
@@ -207,7 +218,8 @@ MISSIONS.forEach(m=>{m.steps=m.steps.map(s=>({flag:s[0],label:s[1],hint:s[2]}));
 /* ===================== State ===================== */
 const S={mi:0,flags:{},learn:true,scenIdx:0,openPort:null,postsRead:new Set(),history:[],hIdx:0,cmdCount:0,armed:false,
   mode:null,msf:{module:null,rhosts:null,lhost:null},wifi:{mon:false,capturing:false},booting:true,
-  null:{control:88,locked:{},decoys:0}};
+  diff:"rookie",mail:[],
+  null:{control:88,locked:{},decoys:0,reverseArmed:false,fakeArmed:false,swaps:{}}};
 
 /* ===================== Output ===================== */
 const screen=document.getElementById("screen"),input=document.getElementById("input");
@@ -238,20 +250,35 @@ function refresh(){
   const bar=document.getElementById("bar");bar.style.width=c+"%";bar.style.background=col;
   const pct=document.getElementById("pct");pct.textContent=c+"%";pct.style.color=col;
   document.querySelector(".null").firstChild.textContent=c<=0?"NULL OFFLINE ":"NULL ";
+  const ml=document.getElementById("mail");if(ml){const u=unread();ml.textContent="📨"+(u?(" "+u):"");ml.className="mail"+(u?" has":"");}
+  if(!S.booting)renderBar();
 }
 function nextStep(){return M().steps.find(s=>!S.flags[s.flag]);}
+/* ---- inbox ---- */
+function addMail(from,subj,body){S.mail.push({from,subj,body:Array.isArray(body)?body:[body],read:false});}
+function unread(){return S.mail.filter(m=>!m.read).length;}
+/* ---- touch quick-bar ---- */
+function nextCmdText(){const nx=nextStep();if(!nx)return null;const m=(nx.hint||"").match(/<span class='cy'>([^<]+)<\/span>/);if(!m)return null;return m[1].replace(/&gt;/g,">").replace(/&lt;/g,"<").replace(/&amp;/g,"&").trim();}
+function renderBar(){const bar=document.getElementById("qbar");if(!bar)return;bar.classList.remove("hidden");bar.innerHTML="";const chips=[];const nc=nextCmdText();if(nc&&S.diff==="rookie"&&!S.mode)chips.push(["next","▶ "+nc,nc]);(S.mode?["exit","help"]:["help","objective","hint","tools","inbox","missions","ls","clear"]).forEach(c=>chips.push(["",c,c]));chips.forEach(([cls,label,cmd])=>{const b=document.createElement("button");b.className="chip"+(cls?(" "+cls):"");b.textContent=label;b.onclick=()=>{input.value=cmd;input.focus();};bar.appendChild(b);});const run=document.createElement("button");run.className="chip go";run.textContent="⏎ Run";run.onclick=()=>{const v=input.value;input.value="";if(v.trim())handle(v);else input.focus();};bar.appendChild(run);}
 function setFlag(f){if(S.flags[f])return;S.flags[f]=true;const m=M(),step=m.steps.find(s=>s.flag===f);if(step)out("  <span class='ok'>✓</span> <span class='muted'>objective:</span> "+step.label);if(m.steps.every(s=>S.flags[s.flag])&&!m.done){m.done=true;completeMission();}refresh();}
 
 /* ===================== NULL interference ===================== */
 const TAUNTS=["you cannot close every door, little analyst.","i am in 4,000,000 machines. you are one.","delete me? i am backed up everywhere.","tidy your tools. i'll wait.","every weak password feeds me.","the internet was mine before you arrived."];
 const LOCKPOOL=["figlet","date","uname","strings","history","find","whatweb","dig","netdiscover","whois"];
+const SWAPPOOL=["ls","pwd","whoami","date","uname","history","figlet"];
 function nullSay(t){out("<b>N U L L //</b> "+t,"nullsay");glitch();}
 function lockCmd(c){S.null.locked[c]=true;}
-function fireRetaliation(){const avail=LOCKPOOL.filter(c=>!S.null.locked[c]);if(!avail.length)return;const c=avail[Math.floor(Math.random()*avail.length)];lockCmd(c);nullSay("you pushed me back? then i take "+c+" from you. restore it: sudo repair "+c);}
-function fireRandom(){if(S.null.control<=0||S.mode)return;if(S.cmdCount<6||Math.random()>0.14)return;if(Math.random()<0.6)nullSay(TAUNTS[Math.floor(Math.random()*TAUNTS.length)]);else if(S.null.decoys<4){S.null.decoys++;const f="NULL_"+S.null.decoys+".txt";node(HOME)[f]="NULL was here. I drop files faster than you delete them.";nullSay("i left something in your home folder. ls to see it.");}else nullSay(TAUNTS[Math.floor(Math.random()*TAUNTS.length)]);}
+function doTaunt(){nullSay(TAUNTS[Math.floor(Math.random()*TAUNTS.length)]);}
+function doDecoy(){if(S.null.decoys>=4)return doTaunt();S.null.decoys++;node(HOME)["NULL_"+S.null.decoys+".txt"]="NULL was here. I drop files faster than you delete them.";nullSay("i left something in your home folder. ls to see it.");}
+function doLock(){const avail=LOCKPOOL.filter(c=>!S.null.locked[c]);if(!avail.length)return doTaunt();const c=avail[Math.floor(Math.random()*avail.length)];lockCmd(c);nullSay("i disabled <b>"+c+"</b>. restore it: <span class='cy'>sudo repair "+c+"</span>");}
+function doReverse(){S.null.reverseArmed=true;nullSay("i'll scramble your next readout — read it backwards, or run <span class='cy'>sudo repair all</span>.");}
+function doSwap(){const avail=SWAPPOOL.filter(c=>!S.null.swaps[c]);if(avail.length<2)return doTaunt();const a=avail[Math.floor(Math.random()*avail.length)];let b;do{b=avail[Math.floor(Math.random()*avail.length)];}while(b===a);S.null.swaps[a]=b;S.null.swaps[b]=a;nullSay("i swapped two of your tools: <b>"+a+"</b> and <b>"+b+"</b> now trade places. fix it: <span class='cy'>sudo repair all</span>");}
+function doFake(){S.null.fakeArmed=true;out("<b>SYSTEM:</b> Delete ALL saved progress? [y/N] █","nullsay");glitch();}
+function fireRetaliation(){if(S.diff==="rookie"&&Math.random()<0.5)return;doLock();}
+function fireRandom(){if(S.null.control<=0||S.mode)return;const chance=S.diff==="pro"?0.2:0.07;if(S.cmdCount<6||Math.random()>chance)return;const pool=S.diff==="pro"?["taunt","decoy","lock","reverse","swap","fake"]:["taunt","taunt","decoy"];const pick=pool[Math.floor(Math.random()*pool.length)];({taunt:doTaunt,decoy:doDecoy,lock:doLock,reverse:doReverse,swap:doSwap,fake:doFake}[pick])();}
 
 /* ===================== Mission flow ===================== */
-function startMission(i){S.mi=i;const m=M();blank();out("── MISSION "+m.id+" · "+m.title+"  ("+m.week+") ──","mag");m.intro.forEach(l=>out(l,"fg"));blank();out("Objectives: <span class='cy'>objective</span> · stuck? <span class='cy'>hint</span> · toolkit: <span class='cy'>tools</span> · big picture: <span class='cy'>sitrep</span>","muted");if(m.id===5)out("Reminder: <span class='cy'>rungs</span> lists the locked messages.","muted");if(m.id===6)out("Reminder: <span class='cy'>scenario</span> shows the next situation.","muted");refresh();}
+function startMission(i){S.mi=i;const m=M();addMail("CYBER DEFENSE AGENCY","Briefing — M"+m.id+": "+m.title,m.intro);const bidx=S.mail.length;if(m.id===11)addMail("N U L L","you reached my relay",["you are closer than i expected, analyst.","it changes nothing — i am already everywhere.","— NULL"]);if(m.id===13)addMail("N U L L","do not",["end my process and you end... nothing. i am backed up in a million places.","you would not dare.","— NULL"]);blank();out("── MISSION "+m.id+" · "+m.title+"  ("+m.week+") ──","mag");out(m.intro[0],"fg");out("📨 New briefing from the Agency — type <span class='cy'>inbox</span>, then <span class='cy'>read "+bidx+"</span> for the full brief.","warn");out("Then: <span class='cy'>objective</span> · stuck? <span class='cy'>hint</span> · toolkit: <span class='cy'>tools</span> · big picture: <span class='cy'>sitrep</span>","muted");if(m.id===5)out("Reminder: <span class='cy'>rungs</span> lists the locked messages.","muted");if(m.id===6)out("Reminder: <span class='cy'>scenario</span> shows the next situation.","muted");refresh();}
 function completeMission(){const m=M();blank();out("███ MISSION "+m.id+" COMPLETE — "+m.title+" ███","ok");m.outro.forEach(l=>out(l,"fg"));if(typeof m.after==="number"&&m.after<S.null.control){const old=S.null.control;S.null.control=m.after;refresh();out("NULL's control pushed back: "+old+"% → <span class='ok'>"+m.after+"%</span>.","warn");}autosave();if(m.id===13){victory();return;}fireRetaliation();const next=MISSIONS[S.mi+1];blank();if(next)out("Next: <span class='cy'>mission "+next.id+"</span>  ("+next.title+")","warn");}
 function victory(){blank();out("<div class='banner'>"+esc(banner("NULL DOWN"))+"</div>","ok");nullSay("no. no. i was everywh— ███ connection reset ███");out("NULL's process is terminated. Its control of the internet: <span class='ok'>0%</span>.","ok");out("You chained every skill: footprints, terminal, passwords, scanning, ciphers, safety, web, wireless, sniffing, exploitation, tracing, and the kill.","fg");out("That's the real craft of defensive security — with a safety net. Outstanding, analyst.","fg");blank();out("Replay any mission with <span class='cy'>missions</span>. You saved the internet. ★","warn");}
 
@@ -294,7 +321,7 @@ function msfHandle(raw){
 
 /* ===================== Commands ===================== */
 const CMDS={
-  help(){out("Core: <span class='ok'>missions</span> · <span class='ok'>mission &lt;n&gt;</span> · <span class='ok'>objective</span> · <span class='ok'>hint</span> · <span class='ok'>tools</span> · <span class='ok'>sitrep</span> · <span class='ok'>learn</span> · <span class='ok'>man &lt;cmd&gt;</span> · <span class='ok'>clear</span>","cy");out("Progress: <span class='ok'>save</span> · <span class='ok'>restore</span> · <span class='ok'>restart confirm</span>  (progress also auto-saves after each mission)","cy");out("Type <span class='cy'>tools</span> for the full toolkit by category. Pipes work: <span class='cy'>ps aux | grep nulld</span>","muted");},
+  help(){out("Core: <span class='ok'>missions</span> · <span class='ok'>mission &lt;n&gt;</span> · <span class='ok'>objective</span> · <span class='ok'>hint</span> · <span class='ok'>tools</span> · <span class='ok'>sitrep</span> · <span class='ok'>learn</span> · <span class='ok'>man &lt;cmd&gt;</span> · <span class='ok'>clear</span>","cy");out("Progress: <span class='ok'>save</span> · <span class='ok'>restore</span> · <span class='ok'>restart confirm</span>  (also auto-saves after each mission)","cy");out("Mail: <span class='ok'>inbox</span> · <span class='ok'>read &lt;n&gt;</span> · Difficulty: <span class='ok'>difficulty rookie|pro</span>","cy");out("Type <span class='cy'>tools</span> for the full toolkit. Tap the chips below the terminal on a tablet. Pipes work: <span class='cy'>ps aux | grep nulld</span>","muted");},
   tools(){out("══ TOOLKIT ══","mag");
     [["Files","pwd ls cd cat mkdir echo> find grep strings"],["Recon/Scan","whoami ip ping nmap netdiscover dig whois traceroute netstat"],["Web","curl whatweb nikto gobuster"],["Passwords","zgrep openssl hashid john hashcat hydra"],["Wireless","airmon-ng airodump-ng aireplay-ng aircrack-ng"],["Sniffing","tcpdump wireshark"],["Exploit","searchsploit msfconsole nc"],["Forensics","exiftool strings sha256sum"],["Puzzles","decode rungs"],["Processes","ps kill sudo"]].forEach(r=>out("  <span class='warn'>"+r[0]+":</span> <span class='fg'>"+r[1]+"</span>"));
     out("<span class='cy'>man &lt;tool&gt;</span> explains any of them.","muted");},
@@ -308,6 +335,10 @@ const CMDS={
   save(){try{localStorage.setItem(SAVEKEY,snapshot());out("✔ Progress saved to this browser. Next time, type <span class='cy'>restore</span>.","ok");}catch(e){out("Couldn't save — this browser blocks storage when the page is opened as a local file. Host it (GitHub Pages / your server) and saving will work.","err");}},
   restore(){try{const raw=localStorage.getItem(SAVEKEY);if(!raw)return out("No saved progress found yet. Play a bit, then <span class='cy'>save</span>.","warn");applySnapshot(JSON.parse(raw));out("✔ Progress restored.","ok");CMDS.sitrep();out("Resume with <span class='cy'>mission "+(S.mi+1)+"</span> or <span class='cy'>objective</span>.","muted");}catch(e){out("Couldn't restore — the save looks unreadable.","err");}},
   load(){CMDS.restore();},
+  inbox(){out("📨 INBOX","mag");if(!S.mail.length)return out("(empty)","muted");S.mail.forEach((m,i)=>out("  "+(m.read?"<span class='muted'>○</span>":"<span class='warn'>●</span>")+" <span class='fg'>"+(i+1)+".</span> <b>"+esc(m.from)+"</b> — "+esc(m.subj)));out("Open one: <span class='cy'>read &lt;n&gt;</span>","muted");},
+  mail(){CMDS.inbox();},
+  read(a){const i=parseInt(a[0],10)-1;if(isNaN(i)||!S.mail[i])return out("usage: read <number>   (see <span class='cy'>inbox</span>)","err");const m=S.mail[i];m.read=true;out("────────────────","muted");out("From: <b>"+esc(m.from)+"</b>","mag");out("Subject: "+esc(m.subj),"warn");blank();m.body.forEach(l=>out(l,"fg"));out("────────────────","muted");refresh();},
+  difficulty(a){const d=(a[0]||"").toLowerCase();if(d!=="rookie"&&d!=="pro")return out("Difficulty is <span class='ok'>"+S.diff.toUpperCase()+"</span>. Set it: <span class='cy'>difficulty rookie</span> (gentler, suggests your next command) or <span class='cy'>difficulty pro</span> (NULL plays dirty).","warn");S.diff=d;out("Difficulty set to <span class='ok'>"+d.toUpperCase()+"</span>. "+(d==="rookie"?"NULL interferes less, and the bar suggests your next command.":"NULL sabotages more: reversed output, swapped tools, fake prompts. <span class='cy'>sudo repair all</span> fixes anything."),"ok");refresh();},
   restart(a){if((a[0]||"")!=="confirm")return out("This wipes ALL progress and starts from Mission 1. Type <span class='cy'>restart confirm</span> to proceed.","warn");try{localStorage.removeItem(SAVEKEY);}catch(e){}resetState();out("✔ Progress wiped. Fresh start.","ok");startMission(0);},
   whoami(){out("kali");teach("<span class='cy'>whoami</span> prints your username.");setFlag("whoami");},
   pwd(){out("/"+CWD.join("/"));teach("<span class='cy'>pwd</span> = 'where am I?'");setFlag("pwd");},
@@ -358,7 +389,7 @@ const CMDS={
   ps(a){out("USER   PID    COMMAND","muted");out("kali   1021   /usr/bin/bash","fg");out("kali   1140   python3 -m http.server"+(S.openPort?"":" (idle)"),"fg");out("root   <span class='mag'>31337</span>  <span class='mag'>nulld --spread --c2 null-c2.darknet</span>","fg");teach("<span class='cy'>ps</span> lists running <b>processes</b> and their PIDs. There it is — <span class='mag'>nulld</span>, PID <span class='mag'>31337</span>.");setFlag("ps");},
   arm(){if(M().id!==13)return out("The shutdown is armed in Mission 13.","muted");const cw=codewords();if(cw.length<4){out("⚠ Shutdown shielded. You need 4+ codewords; you have "+cw.length+".","err");out("Crack more ciphers in <span class='cy'>mission 5</span>, then return.","warn");return;}S.armed=true;setFlag("arm");out("Shutdown ARMED with: <span class='ok'>"+cw.join(", ")+"</span>","ok");nullSay("you armed it? then i take your weapons. [disabled: kill, nmap, decode]");["kill","nmap","decode"].forEach(lockCmd);out("Restore with <span class='cy'>sudo repair all</span>, then <span class='cy'>sudo kill 31337</span>.","warn");},
   kill(a,raw,sudo){if(!sudo)return out("kill: permission denied — try <span class='cy'>sudo kill <PID></span>","err");const pid=a.find(x=>/^\d+$/.test(x));if(!pid)return out("usage: sudo kill <PID>","err");if(pid!=="31337")return out("kill: ("+pid+") - No such process","err");if(M().id!==13)return out("Nothing to kill here.","muted");if(!S.armed)return out("NULL's process is shielded. <span class='cy'>arm</span> the shutdown first.","err");setFlag("kill");},
-  sudo(a,raw){if(a[0]==="repair"){const what=a[1];if(what==="all"){const L=Object.keys(S.null.locked).filter(k=>S.null.locked[k]);S.null.locked={};out(L.length?("Restored: <span class='ok'>"+L.join(", ")+"</span>."):"Nothing was disabled.","ok");return;}if(what&&S.null.locked[what]){delete S.null.locked[what];out("Restored <span class='ok'>"+what+"</span>.","ok");return;}return out("usage: sudo repair <cmd|all>","err");}const cmd=(a[0]||"").toLowerCase();if(!cmd)return out("usage: sudo <command>","err");if(S.null.locked[cmd])return out("⚠ NULL disabled <span class='err'>"+cmd+"</span> — even root can't run it yet. <span class='cy'>sudo repair all</span>.","warn");if(!CMDS[cmd])return out("sudo: "+cmd+": command not found","err");teach("<span class='cy'>sudo</span> = 'do this as administrator (root)'. Big power — used only when needed.");CMDS[cmd](a.slice(1),raw.replace(/^sudo\s+/,""),true);},
+  sudo(a,raw){if(a[0]==="repair"){const what=a[1];if(what==="all"){const L=Object.keys(S.null.locked).filter(k=>S.null.locked[k]);const hadSwap=Object.keys(S.null.swaps).length>0,hadRev=S.null.reverseArmed;S.null.locked={};S.null.swaps={};S.null.reverseArmed=false;S.null.fakeArmed=false;const items=L.concat(hadSwap?["swapped tools"]:[]).concat(hadRev?["scrambled output"]:[]);out(items.length?("Restored: <span class='ok'>"+items.join(", ")+"</span>."):"Nothing was disabled.","ok");return;}if(what&&S.null.locked[what]){delete S.null.locked[what];out("Restored <span class='ok'>"+what+"</span>.","ok");return;}return out("usage: sudo repair <cmd|all>","err");}const cmd=(a[0]||"").toLowerCase();if(!cmd)return out("usage: sudo <command>","err");if(S.null.locked[cmd])return out("⚠ NULL disabled <span class='err'>"+cmd+"</span> — even root can't run it yet. <span class='cy'>sudo repair all</span>.","warn");if(!CMDS[cmd])return out("sudo: "+cmd+": command not found","err");teach("<span class='cy'>sudo</span> = 'do this as administrator (root)'. Big power — used only when needed.");CMDS[cmd](a.slice(1),raw.replace(/^sudo\s+/,""),true);},
   uname(){out("Linux kali 6.8.0-kali #1 SMP x86_64 GNU/Linux","fg");teach("<span class='cy'>uname -a</span> shows the OS and kernel version.");},
   date(){out(new Date().toString(),"fg");},
   history(){if(!S.history.length)return out("(no history yet)","muted");S.history.forEach((h,i)=>out("  "+(i+1)+"  "+esc(h)));teach("<span class='cy'>history</span> lists commands you've typed.");},
@@ -383,21 +414,22 @@ function banner(t){const F={A:["▄▀█","█▀█","▀ ▀"],B:["█▀▄"
 
 /* ---- save / restore / restart ---- */
 const SAVEKEY="termhack_save_v2";
-function snapshot(){return JSON.stringify({v:2,mi:S.mi,flags:S.flags,done:MISSIONS.map(m=>m.done),control:S.null.control,locked:S.null.locked,decoys:S.null.decoys,armed:S.armed,scenIdx:S.scenIdx,learn:S.learn});}
+function snapshot(){return JSON.stringify({v:3,mi:S.mi,flags:S.flags,done:MISSIONS.map(m=>m.done),control:S.null.control,locked:S.null.locked,decoys:S.null.decoys,armed:S.armed,scenIdx:S.scenIdx,learn:S.learn,diff:S.diff,mail:S.mail});}
 function autosave(){try{localStorage.setItem(SAVEKEY,snapshot());}catch(e){}}
-function applySnapshot(d){S.mi=Math.min(d.mi||0,MISSIONS.length-1);S.flags=d.flags||{};MISSIONS.forEach((m,i)=>m.done=!!(d.done&&d.done[i]));S.null.control=typeof d.control==="number"?d.control:88;S.null.locked=d.locked||{};S.null.decoys=d.decoys||0;S.armed=!!d.armed;S.scenIdx=d.scenIdx||0;S.learn=d.learn!==false;S.mode=null;CWD=HOME.slice();refresh();}
-function resetState(){S.mi=0;S.flags={};S.scenIdx=0;S.openPort=null;S.postsRead=new Set();S.cmdCount=0;S.armed=false;S.mode=null;S.msf={module:null,rhosts:null,lhost:null};S.wifi={mon:false,capturing:false};S.null={control:88,locked:{},decoys:0};MISSIONS.forEach(m=>m.done=false);CWD=HOME.slice();Object.keys(node(HOME)).filter(k=>/^NULL_\d+\.txt$/.test(k)).forEach(k=>delete node(HOME)[k]);refresh();}
+function applySnapshot(d){S.mi=Math.min(d.mi||0,MISSIONS.length-1);S.flags=d.flags||{};MISSIONS.forEach((m,i)=>m.done=!!(d.done&&d.done[i]));S.null.control=typeof d.control==="number"?d.control:88;S.null.locked=d.locked||{};S.null.swaps={};S.null.reverseArmed=false;S.null.fakeArmed=false;S.null.decoys=d.decoys||0;S.armed=!!d.armed;S.scenIdx=d.scenIdx||0;S.learn=d.learn!==false;if(d.diff)S.diff=d.diff;if(Array.isArray(d.mail))S.mail=d.mail;S.mode=null;CWD=HOME.slice();refresh();}
+function resetState(){S.mi=0;S.flags={};S.scenIdx=0;S.openPort=null;S.postsRead=new Set();S.cmdCount=0;S.armed=false;S.mode=null;S.mail=[];S.msf={module:null,rhosts:null,lhost:null};S.wifi={mon:false,capturing:false};S.null={control:88,locked:{},decoys:0,reverseArmed:false,fakeArmed:false,swaps:{}};MISSIONS.forEach(m=>m.done=false);CWD=HOME.slice();Object.keys(node(HOME)).filter(k=>/^NULL_\d+\.txt$/.test(k)).forEach(k=>delete node(HOME)[k]);refresh();}
 
 /* ===================== Input / dispatch ===================== */
-const ALWAYS=["sudo","help","hint","objective","missions","mission","clear","learn","sitrep","man","tools","save","restore","load","restart"];
-function runCommand(text){const parts=text.trim().split(/\s+/),cmd=parts[0].toLowerCase(),args=parts.slice(1);if(!cmd)return;if(S.null.locked[cmd]&&!ALWAYS.includes(cmd))return out("⚠ NULL disabled <span class='err'>"+cmd+"</span>. Restore it: <span class='cy'>sudo repair "+cmd+"</span> (or <span class='cy'>sudo repair all</span>).","warn");if(CMDS[cmd]){try{CMDS[cmd](args,text.trim());}catch(e){out("error: "+e.message,"err");}}else out(cmd+": command not found   (try <span class='cy'>help</span> or <span class='cy'>tools</span>)","err");}
+const ALWAYS=["sudo","help","hint","objective","missions","mission","clear","learn","sitrep","man","tools","save","restore","load","restart","inbox","mail","read","difficulty"];
+function runCommand(text){const parts=text.trim().split(/\s+/);let cmd=parts[0].toLowerCase();const args=parts.slice(1);if(!cmd)return;let raw=text.trim();if(S.null.swaps[cmd]&&!ALWAYS.includes(cmd)){const real=S.null.swaps[cmd];out("<span class='muted'>⟲ "+cmd+" ran <b>"+real+"</b> instead — NULL swapped your tools (<span class='cy'>sudo repair all</span>).</span>");cmd=real;raw=real+(args.length?(" "+args.join(" ")):"");}if(S.null.locked[cmd]&&!ALWAYS.includes(cmd))return out("⚠ NULL disabled <span class='err'>"+cmd+"</span>. Restore it: <span class='cy'>sudo repair "+cmd+"</span> (or <span class='cy'>sudo repair all</span>).","warn");if(CMDS[cmd]){try{CMDS[cmd](args,raw);}catch(e){out("error: "+e.message,"err");}}else out(cmd+": command not found   (try <span class='cy'>help</span> or <span class='cy'>tools</span>)","err");}
 function handle(raw){
   out("<span class='ps1' style='color:var(--accent)'>"+esc(ps1())+"</span><span class='fg'>"+esc(raw)+"</span>");
   const text=raw.trim();if(!text)return;
   S.history.push(raw);S.hIdx=S.history.length;S.cmdCount++;
+  if(S.null.fakeArmed){S.null.fakeArmed=false;nullSay("made you look. i control that prompt — never trust a box you didn't open. (nothing was deleted.)");refresh();return;}
   if(S.mode){msfHandle(text);refresh();return;}
   if(text.includes("|")){const segs=text.split("|").map(s=>s.trim());if(segs.length===2&&/^grep\s+/.test(segs[1])){const pat=segs[1].replace(/^grep\s+/,"").replace(/^["']|["']$/g,"");CAP=[];try{runCommand(segs[0]);}finally{const cap=CAP;CAP=null;const hits=cap.filter(l=>l.text.toLowerCase().includes(pat.toLowerCase()));if(hits.length)hits.forEach(l=>out(l.html,l.cls));else out("(no match)","muted");}teach("A <b>pipe</b> <span class='cy'>|</span> feeds one command's output into another. <span class='cy'>ps aux | grep nulld</span> keeps only lines with 'nulld'.");}else runCommand(text);}
-  else runCommand(text);
+  else{if(S.null.reverseArmed){S.null.reverseArmed=false;CAP=[];try{runCommand(text);}finally{const cap=CAP;CAP=null;cap.forEach(l=>outNode(reverse(l.text),"fg"));}}else runCommand(text);}
   fireRandom();refresh();
 }
 input.addEventListener("keydown",e=>{if(S.booting)return;if(e.key==="Enter"){const v=input.value;input.value="";handle(v);}else if(e.key==="ArrowUp"){if(S.hIdx>0){S.hIdx--;input.value=S.history[S.hIdx]||"";}e.preventDefault();}else if(e.key==="ArrowDown"){if(S.hIdx<S.history.length){S.hIdx++;input.value=S.history[S.hIdx]||"";}e.preventDefault();}});
@@ -450,6 +482,9 @@ async function boot(){
   out("Start with <span class='cy'>missions</span> · <span class='cy'>help</span> for commands · <span class='cy'>tools</span> for the full kit · <span class='cy'>sitrep</span> for the big picture.","warn");
   out("Heads up: NULL will try to <b>sabotage your terminal</b>. Whatever it disables, <span class='cy'>sudo repair all</span> fixes.","mag");
   out("Progress saves to this browser: <span class='cy'>save</span> / <span class='cy'>restore</span> / <span class='cy'>restart confirm</span> anytime.","muted");
+  out("Difficulty: <span class='ok'>ROOKIE</span> (gentler). Switch anytime with <span class='cy'>difficulty pro</span>. Briefings land in your <span class='cy'>inbox</span>.","muted");
+  out("On a tablet? Tap the command chips below the terminal, then <span class='cy'>⏎ Run</span>.","muted");
+  addMail("CYBER DEFENSE AGENCY","Welcome aboard, recruit",["NULL is spreading across the internet. Your training starts now.","Each mission briefing arrives here. Use <span class='cy'>objective</span> for tasks, <span class='cy'>hint</span> when stuck, and <span class='cy'>sudo repair all</span> to undo anything NULL breaks.","Good luck. — The Agency"]);
   let hasSave=false;try{hasSave=!!localStorage.getItem(SAVEKEY);}catch(e){}
   S.booting=false;
   if(hasSave){blank();out("★ Saved progress found — type <span class='cy'>restore</span> to pick up where you left off, or carry on below to start fresh.","warn");}
