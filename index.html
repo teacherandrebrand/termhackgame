@@ -5,26 +5,22 @@
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>TermHack — Operation NULL</title>
 <style>
-  :root{
-    --bg:#0a0e0a; --fg:#c8f7c5; --dim:#5f8a5c;
-    --accent:#39ff14; --amber:#ffb627; --cyan:#4ad7ff; --red:#ff5a5a; --mag:#ff7be5;
-    --font:"SF Mono",ui-monospace,"Cascadia Code",Menlo,Consolas,monospace;
-  }
+  :root{--bg:#0a0e0a;--fg:#c8f7c5;--dim:#5f8a5c;--accent:#39ff14;--amber:#ffb627;--cyan:#4ad7ff;--red:#ff5a5a;--mag:#ff7be5;
+    --font:"SF Mono",ui-monospace,"Cascadia Code",Menlo,Consolas,monospace;}
   *{box-sizing:border-box}
   html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);font-family:var(--font)}
   body{display:flex;flex-direction:column;overflow:hidden}
   body.glitch{animation:gl .5s steps(2) 1}
   @keyframes gl{0%{transform:translate(0,0)}25%{transform:translate(-3px,1px);filter:hue-rotate(40deg)}50%{transform:translate(3px,-2px)}75%{transform:translate(-2px,2px);filter:hue-rotate(-30deg)}100%{transform:translate(0,0)}}
   .topbar{display:flex;align-items:center;gap:12px;padding:8px 14px;background:linear-gradient(180deg,#10190f,#0b110b);border-bottom:1px solid #1d2e1b;font-size:12.5px;flex-wrap:wrap}
-  .brand{color:var(--accent);font-weight:700;letter-spacing:1px}
-  .brand .b{color:var(--dim)}
-  .mtitle{color:var(--amber)} .mtitle b{color:var(--fg)}
+  .topbar.hidden{display:none}
+  .brand{color:var(--accent);font-weight:700;letter-spacing:1px}.brand .b{color:var(--dim)}
+  .mtitle{color:var(--amber)}.mtitle b{color:var(--fg)}
   .null{display:flex;align-items:center;gap:6px;color:var(--red);font-weight:700}
-  .bar{width:90px;height:10px;border:1px solid #3a1414;background:#160a0a;border-radius:3px;overflow:hidden}
-  .bar>i{display:block;height:100%;background:linear-gradient(90deg,#ff5a5a,#ff2d2d);width:88%}
+  .bar{width:84px;height:10px;border:1px solid #3a1414;background:#160a0a;border-radius:3px;overflow:hidden}
+  .bar>i{display:block;height:100%;background:#ff2d2d;width:88%}
   .right{display:flex;align-items:center;gap:10px;margin-left:auto}
-  .count{color:var(--dim)}
-  .steps{display:flex;gap:5px}
+  .count{color:var(--dim)}.steps{display:flex;gap:5px}
   .pip{width:9px;height:9px;border-radius:50%;border:1px solid var(--dim)}
   .pip.done{background:var(--accent);border-color:var(--accent);box-shadow:0 0 6px var(--accent)}
   .screen{flex:1;overflow-y:auto;padding:14px 16px 4px;line-height:1.5;font-size:14px}
@@ -32,41 +28,43 @@
   .line{white-space:pre-wrap;word-break:break-word}
   .muted{color:var(--dim)}.ok{color:var(--accent)}.warn{color:var(--amber)}.err{color:var(--red)}
   .cy{color:var(--cyan)}.mag{color:var(--mag)}.fg{color:var(--fg)}
-  .teach{color:#86b981;border-left:2px solid #2e4a2b;padding-left:8px;margin:2px 0 6px}
-  .teach .tag{color:var(--amber)}
+  .teach{color:#86b981;border-left:2px solid #2e4a2b;padding-left:8px;margin:2px 0 6px}.teach .tag{color:var(--amber)}
   .rule{color:var(--amber);border-left:2px solid #6b5212;padding-left:8px;margin:4px 0;background:#15120a}
   .nullsay{color:var(--mag);border-left:2px solid #5a2b52;padding-left:8px;margin:4px 0;background:#160c14;text-shadow:0 0 6px rgba(255,123,229,.4)}
   .promptrow{display:flex;align-items:baseline;padding:2px 16px 14px}
+  .promptrow.hidden{visibility:hidden}
   .ps1{color:var(--accent);white-space:pre;margin-right:6px}
   #input{flex:1;background:transparent;border:none;outline:none;color:var(--fg);font-family:var(--font);font-size:14px;caret-color:var(--accent)}
   .flag{color:#0a0e0a;background:var(--accent);padding:1px 6px;border-radius:3px;font-weight:700}
   .banner{color:var(--accent);line-height:1.15}
-  @media(max-width:680px){.mtitle{display:none}}
+  .cur::after{content:"\2588";color:var(--accent);animation:bl 1s steps(2) infinite}
+  @keyframes bl{0%,50%{opacity:1}50.01%,100%{opacity:0}}
+  .skip{position:fixed;bottom:10px;right:14px;color:var(--dim);font-size:11px}
+  @media(max-width:700px){.mtitle{display:none}}
 </style>
 </head>
 <body>
-  <div class="topbar">
+  <div class="topbar hidden" id="topbar">
     <span class="brand">Term<span class="b">//</span>Hack</span>
     <span class="mtitle" id="mtitle"></span>
     <span class="right">
       <span class="null" title="NULL's control of the internet">NULL <span class="bar"><i id="bar"></i></span> <span id="pct">88%</span></span>
-      <span class="count" id="count"></span>
-      <span class="steps" id="steps"></span>
+      <span class="count" id="count"></span><span class="steps" id="steps"></span>
     </span>
   </div>
   <div class="screen" id="screen"></div>
-  <div class="promptrow"><span class="ps1" id="ps1"></span><input id="input" autocomplete="off" autocapitalize="off" spellcheck="false" autofocus></div>
+  <div class="promptrow hidden" id="promptrow"><span class="ps1" id="ps1"></span><input id="input" autocomplete="off" autocapitalize="off" spellcheck="false"></div>
+  <div class="skip" id="skip"></div>
 
 <script>
 "use strict";
 
-/* ======================= Ciphers (Mission 5) ======================= */
+/* ===================== Ciphers (Mission 5) ===================== */
 const AZ="ABCDEFGHIJKLMNOPQRSTUVWXYZ";
 const reverse=s=>s.split("").reverse().join("");
 const rot13=s=>s.replace(/[a-z]/gi,c=>{const b=c<="Z"?65:97;return String.fromCharCode((c.charCodeAt(0)-b+13)%26+b);});
 const atbash=s=>s.replace(/[a-z]/gi,c=>{const up=c<="Z";const i=AZ.indexOf(c.toUpperCase());const r=AZ[25-i];return up?r:r.toLowerCase();});
-const toB64=s=>btoa(s);
-const fromB64=s=>{try{return atob(s.trim());}catch(e){return "[not valid Base64]";}};
+const toB64=s=>btoa(s),fromB64=s=>{try{return atob(s.trim());}catch(e){return "[not valid Base64]";}};
 const toBin=s=>s.split("").map(c=>c.charCodeAt(0).toString(2).padStart(8,"0")).join(" ");
 const fromBin=s=>s.trim().split(/\s+/).map(b=>String.fromCharCode(parseInt(b,2))).join("");
 const toHex=s=>s.split("").map(c=>c.charCodeAt(0).toString(16).padStart(2,"0")).join(" ");
@@ -77,31 +75,27 @@ const toMorse=s=>s.toUpperCase().split("").map(c=>c===" "?"/":(MORSE[c]||"")).jo
 const fromMorse=s=>s.trim().split(/\s+/).map(t=>t==="/"?" ":(RMORSE[t]||"")).join("");
 const DECODE={reverse,rot13,atbash,base64:fromB64,binary:fromBin,hex:fromHex,morse:fromMorse};
 const RUNGS=[
-  {n:1,type:"reverse", plain:"NICE START YOUR CODEWORD IS ORBIT", word:"ORBIT",  trick:"Backwards writing"},
-  {n:2,type:"rot13",   plain:"YOUR CODEWORD IS NEBULA",           word:"NEBULA", trick:"Caesar shift (ROT13)"},
-  {n:3,type:"morse",   plain:"CODEWORD COMET",                    word:"COMET",  trick:"Morse code"},
-  {n:4,type:"base64",  plain:"YOUR CODEWORD IS QUASAR",           word:"QUASAR", trick:"Base64"},
-  {n:5,type:"binary",  plain:"CODEWORD PULSAR",                   word:"PULSAR", trick:"Binary (1s and 0s)"},
-  {n:6,type:"hex",     plain:"CODEWORD METEOR",                   word:"METEOR", trick:"Hexadecimal"},
-  {n:7,type:"atbash",  plain:"CODEWORD GALAXY",                   word:"GALAXY", trick:"Atbash (mirror alphabet)"},
-  {n:8,type:"boss",    plain:"FINAL CODEWORD SUPERNOVA",          word:"SUPERNOVA",trick:"Three layers in one"}
+  {n:1,type:"reverse",plain:"NICE START YOUR CODEWORD IS ORBIT",word:"ORBIT",trick:"Backwards writing"},
+  {n:2,type:"rot13",plain:"YOUR CODEWORD IS NEBULA",word:"NEBULA",trick:"Caesar shift (ROT13)"},
+  {n:3,type:"morse",plain:"CODEWORD COMET",word:"COMET",trick:"Morse code"},
+  {n:4,type:"base64",plain:"YOUR CODEWORD IS QUASAR",word:"QUASAR",trick:"Base64"},
+  {n:5,type:"binary",plain:"CODEWORD PULSAR",word:"PULSAR",trick:"Binary (1s and 0s)"},
+  {n:6,type:"hex",plain:"CODEWORD METEOR",word:"METEOR",trick:"Hexadecimal"},
+  {n:7,type:"atbash",plain:"CODEWORD GALAXY",word:"GALAXY",trick:"Atbash (mirror alphabet)"},
+  {n:8,type:"boss",plain:"FINAL CODEWORD SUPERNOVA",word:"SUPERNOVA",trick:"Three layers in one"}
 ];
-function lockRung(r){
-  if(r.type==="reverse")return reverse(r.plain); if(r.type==="rot13")return rot13(r.plain);
-  if(r.type==="atbash")return atbash(r.plain);   if(r.type==="morse")return toMorse(r.plain);
-  if(r.type==="base64")return toB64(r.plain);    if(r.type==="binary")return toBin(r.plain);
-  if(r.type==="hex")return toHex(r.plain);        if(r.type==="boss")return toB64(reverse(rot13(r.plain)));
-}
+function lockRung(r){if(r.type==="reverse")return reverse(r.plain);if(r.type==="rot13")return rot13(r.plain);if(r.type==="atbash")return atbash(r.plain);if(r.type==="morse")return toMorse(r.plain);if(r.type==="base64")return toB64(r.plain);if(r.type==="binary")return toBin(r.plain);if(r.type==="hex")return toHex(r.plain);if(r.type==="boss")return toB64(reverse(rot13(r.plain)));}
 RUNGS.forEach(r=>r.locked=lockRung(r));
 
-/* ======================= Virtual filesystem ======================= */
+/* ===================== Filesystem ===================== */
 const FS={
-  opt:{ "nulld":"\u0000\u0000ELF\u0000\u0000....nulld v6.6  build NULL-OMEGA\n....c2=null-c2.darknet:6666\n....spread() replicate() persist()\n....FLAG{strings_see_what_binaries_hide}\n....if(analyst) taunt();\u0000\u0000" },
-  home:{ kali:{
-    "welcome.txt":"Welcome, analyst. Type 'missions' for your training, 'sitrep' for the big picture.\nClub #1 rule: only test systems you own or have permission to test.",
-    "intercept.cap":"-- captured packet from NULL beacon --\nsrc=10.0.2.15 dst=null-c2.darknet:6666\nNULL> payload: beacon\nNULL> shutdown_token(base64)=U0hVVERPV04=\nNULL> you cannot stop what is everywhere",
-    ".null_trace":"NULL was here. Hidden files start with a dot. You found me. Clever.",
-    cases:{ jamie:{
+  opt:{"nulld":"\u0000\u0000ELF\u0000\u0000..nulld v6.6 NULL-OMEGA\n..c2=null-c2.darknet:6666\n..spread() replicate() persist()\n..FLAG{strings_see_what_binaries_hide}\u0000\u0000"},
+  home:{kali:{
+    "welcome.txt":"Welcome, analyst. 'missions' for training, 'sitrep' for the big picture, 'tools' for your toolkit.\n#1 rule: only test systems you own or have permission to test.",
+    "hash.txt":"5f4dcc3b5aa765d61d8327deb882cf99",
+    "intercept.cap":"-- captured NULL beacon --\nsrc=10.0.2.15 dst=null-c2.darknet:6666\nNULL> shutdown_token(base64)=U0hVVERPV04=\nNULL> you cannot stop what is everywhere",
+    ".null_trace":"NULL was here. Hidden files start with a dot. Clever of you to look.",
+    cases:{jamie:{
       "post1.txt":"@jamie_plays: Game day!! Lions all the way\n[photo: Jamie in a 'Riverside Middle Lions' jersey]",
       "post2.txt":"@jamie_plays: Biscuit is 3 today! Best dog ever\n[photo: a golden retriever in a party hat]",
       "post3.txt":"@jamie_plays: Turning 12 on Oct 14. Party at my place!\n[photo: a birthday cake]",
@@ -111,154 +105,127 @@ const FS={
     }}
   }}
 };
-const HOME=["home","kali"]; let CWD=HOME.slice();
+const HOME=["home","kali"];let CWD=HOME.slice();
 function node(path){let n=FS;for(const p of path){if(n&&typeof n==="object"&&p in n)n=n[p];else return undefined;}return n;}
-function resolve(arg){
-  if(!arg||arg==="~")return HOME.slice();
-  let parts,start;
+function resolve(arg){if(!arg||arg==="~")return HOME.slice();let parts,start;
   if(arg.startsWith("/")){start=[];parts=arg.split("/").filter(Boolean);}
   else if(arg.startsWith("~")){start=HOME.slice();parts=arg.slice(1).split("/").filter(Boolean);}
   else{start=CWD.slice();parts=arg.split("/").filter(Boolean);}
-  for(const p of parts){if(p===".")continue;else if(p==="..")start.pop();else start.push(p);}
-  return start;
-}
+  for(const p of parts){if(p===".")continue;else if(p==="..")start.pop();else start.push(p);}return start;}
 function cwdLabel(){const p="/"+CWD.join("/"),h="/"+HOME.join("/");return p===h?"~":(p.startsWith(h)?"~"+p.slice(h.length):p);}
 
-/* ======================= World: scanning / network / processes ======================= */
-const ALLOWED=["localhost","127.0.0.1","10.0.2.15","scanme.nmap.org","null-c2.darknet"];
-const SCAN={ "scanme.nmap.org":[{n:22,svc:"ssh",ver:"OpenSSH 6.6.1p1"},{n:80,svc:"http",ver:"Apache httpd 2.4.7"}] };
-const DNS={ "scanme.nmap.org":"45.33.32.156","null-c2.darknet":"66.66.6.6","localhost":"127.0.0.1","google.com":"142.250.72.14" };
-const WEB={
-  "scanme.nmap.org":"<html><body><h1>Go ahead and ScanMe!</h1><p>Hello, and welcome to Scanme.Nmap.Org.</p></body></html>",
-  "null-c2.darknet":"<html><body><h1>NULL COMMAND NODE</h1><!-- nulld uptime 99.98% --><p>I am in your routers, your cameras, your fridge. You are late.</p></body></html>"
+/* ===================== Network / targets ===================== */
+const DNS={"scanme.nmap.org":"45.33.32.156","null-c2.darknet":"66.66.6.6","null-relay.lab":"10.0.2.6","vuln-shop.lab":"10.0.2.20","localhost":"127.0.0.1","google.com":"142.250.72.14"};
+const SCAN={
+  "scanme.nmap.org":[{n:22,svc:"ssh",ver:"OpenSSH 6.6.1p1"},{n:80,svc:"http",ver:"Apache httpd 2.4.7"}],
+  "10.0.2.20":[{n:22,svc:"ssh",ver:"OpenSSH 8.2"},{n:80,svc:"http",ver:"nginx 1.18 (PHP 7.2)"}],
+  "10.0.2.6":[{n:21,svc:"ftp",ver:"vsftpd 2.3.4"},{n:22,svc:"ssh",ver:"OpenSSH 7.2"}]
 };
+const WEB={
+  "scanme.nmap.org":"<html><body><h1>Go ahead and ScanMe!</h1></body></html>",
+  "null-c2.darknet":"<html><body><h1>NULL COMMAND NODE</h1><!-- uptime 99.98% --><p>I am in your routers, cameras, fridge.</p></body></html>",
+  "10.0.2.20":"<html><body><h1>Vuln-Shop (practice)</h1><!-- dev: admin panel at /admin --></body></html>",
+  "10.0.2.20/robots.txt":"User-agent: *\nDisallow: /admin\nDisallow: /backup\nDisallow: /uploads",
+  "10.0.2.20/backup/users.sql":"-- users table dump --\nINSERT INTO users VALUES('admin','5f4dcc3b5aa765d61d8327deb882cf99');",
+  "10.0.2.20/admin":"<html><body><h1>Admin Login</h1><form>user/pass</form></body></html>"
+};
+function cleanHost(h){return (h||"").replace(/^https?:\/\//,"").split("/")[0].split(":")[0];}
+function isAllowed(h){h=cleanHost(h);if(["localhost","scanme.nmap.org","null-c2.darknet","null-relay.lab","vuln-shop.lab"].includes(h))return true;if(h==="127.0.0.1")return true;if(/^10\.0\.2\.\d+$/.test(h))return true;if(["45.33.32.156","66.66.6.6"].includes(h))return true;return false;}
+const AP={essid:"CLUB-LAB-AP",bssid:"AA:BB:CC:DD:EE:01",ch:6,key:"club-wifi-2024"};
+const NEIGHBORS=[{essid:"Dragon-5G",bssid:"3C:1A:7F:22:90:B2",ch:11},{essid:"TP-LINK_0F3C",bssid:"50:C7:BF:4D:0F:3C",ch:1}];
 
-/* ======================= Safety scenarios (Mission 6) ======================= */
+/* ===================== Safety scenarios (Mission 6) ===================== */
 const SCEN=[
-  {q:"You find a USB stick on the hallway floor. Plug it into your laptop to see whose it is?",a:"risky",why:"A <b>BadUSB</b> can pretend to be a keyboard and type harmful commands the instant it's plugged in. Hand it to an adult — don't plug it in."},
-  {q:"At the airport you charge your phone in a public USB port with a borrowed cable.",a:"risky",why:"<b>Juice jacking</b> — a tampered port or cable can move data, not just power. Use your own wall charger or a power bank."},
-  {q:"You join 'Free Airport WiFi' and log into your bank.",a:"risky",why:"A stranger can make a fake hotspot with a friendly name (an <b>evil twin</b>). No logins on public Wi-Fi."},
-  {q:"A surprise AirDrop file arrives from someone you don't know. Accept it?",a:"risky",why:"Never accept a pairing or file you didn't start. Set AirDrop / Quick Share to Contacts only."},
-  {q:"You charge your phone from your own charger in a wall socket.",a:"safe",why:"A wall socket carries power only — no data path. This is the safe way to charge."},
-  {q:"You turn OFF Wi-Fi auto-join for public networks.",a:"safe",why:"Now your phone asks before joining, so it can't silently connect to a copied network name. Great habit."}
+  {q:"You find a USB stick on the floor. Plug it in to see whose it is?",a:"risky",why:"A <b>BadUSB</b> can pretend to be a keyboard and type harmful commands instantly. Hand it to an adult."},
+  {q:"You charge your phone in a public USB port with a borrowed cable.",a:"risky",why:"<b>Juice jacking</b> — a tampered port can move data, not just power. Use your own wall charger."},
+  {q:"You join 'Free Airport WiFi' and log into your bank.",a:"risky",why:"A stranger can run a fake hotspot (<b>evil twin</b>). No logins on public Wi-Fi."},
+  {q:"A surprise AirDrop from a stranger. Accept it?",a:"risky",why:"Never accept a file you didn't start. Set AirDrop/Quick Share to Contacts only."},
+  {q:"You charge from your own charger in a wall socket.",a:"safe",why:"A wall socket carries power only — no data path. Safe."},
+  {q:"You turn OFF Wi-Fi auto-join for public networks.",a:"safe",why:"Your phone asks before joining — it can't silently connect to a copied name. Great habit."}
 ];
 
-/* ======================= Missions ======================= */
+/* ===================== Missions ===================== */
 const MISSIONS=[
-  {id:1,title:"Welcome to the Lab",week:"Week 1",after:80,
-   intro:["<span class='mag'>NULL</span> is a rogue AI spreading across the internet. Our agency is fighting back, and you're the newest recruit.",
-     "You're at your <b>practice lab</b> (a Kali virtual machine) — nothing here can hurt your real computer.",
+  {id:1,title:"Welcome to the Lab",week:"Week 1",after:86,
+   intro:["<span class='mag'>NULL</span>, a rogue AI, is spreading across the internet. Our agency fights back — you're the newest recruit.",
+     "This is your <b>practice lab</b> (a Kali VM): nothing here can harm your real computer.",
      "Club <span class='warn'>#1 Rule:</span> only test systems you own or have permission to test.",
-     "Warm-up: NULL feeds on people who overshare. Meet 'Jamie' (made up) and prove how much a stranger could learn from a <b>digital footprint</b>."],
-   steps:[
-     {flag:"whoami",label:"say who you are",hint:"Type <span class='cy'>whoami</span>."},
-     {flag:"readposts",label:"read Jamie's posts",hint:"<span class='cy'>cd ~/cases/jamie</span>, then <span class='cy'>ls</span> and <span class='cy'>cat post1.txt</span> (read a few)."},
-     {flag:"school",label:"find Jamie's school",hint:"A post shows a jersey. <span class='cy'>answer school riverside</span>"},
-     {flag:"pet",label:"find the pet's name",hint:"<span class='cy'>answer pet biscuit</span>"},
-     {flag:"bday",label:"find the birthday",hint:"<span class='cy'>answer birthday oct 14</span>"},
-     {flag:"gps",label:"pull GPS from the photo",hint:"<span class='cy'>exiftool bedroom.jpg</span> (first cd into the jamie folder)."}],
-   outro:["Small clues add up: a jersey, a pet, a date, and a photo's hidden GPS could lead a stranger to Jamie's door.",
-     "<span class='warn'>Take-home:</span> turn OFF your camera's location setting (ask a parent)."]},
-
-  {id:2,title:"Terminal Crash Course",week:"Kali Crash Course",after:70,
-   intro:["Pros talk to the computer by <b>typing</b>. Read the prompt: <span class='cy'>kali@kali:~$</span> = who, which machine, where, ready.",
-     "Build a 'secret base', then run three real tools — all on your OWN machine."],
-   steps:[
-     {flag:"pwd",label:"where am I?",hint:"<span class='cy'>pwd</span>"},
-     {flag:"mkbase",label:"make a base folder",hint:"<span class='cy'>mkdir base</span>"},
-     {flag:"cdbase",label:"go into it",hint:"<span class='cy'>cd base</span>"},
-     {flag:"writeflag",label:"write a file",hint:"<span class='cy'>echo hi &gt; flag.txt</span>"},
-     {flag:"readflag",label:"read it back",hint:"<span class='cy'>cat flag.txt</span>"},
-     {flag:"figlet",label:"make giant text",hint:"<span class='cy'>figlet YOURNAME</span>"},
-     {flag:"ipa",label:"find your address",hint:"<span class='cy'>ip a</span>"},
-     {flag:"ping",label:"ping yourself",hint:"<span class='cy'>ping -c 4 localhost</span>"},
-     {flag:"scanlocal",label:"scan your own doors",hint:"<span class='cy'>nmap localhost</span>"}],
-   outro:["You moved by typing and ran three real tools — all in your own lab. An error in red is a clue (usually a typo). <span class='cy'>Ctrl+C</span> stops anything."]},
-
-  {id:3,title:"Strong Passwords",week:"Week 2",after:60,
-   intro:["Kali ships with <b>rockyou.txt</b> — ~14 million real leaked passwords. NULL loves weak passwords; let's find them first.",
-     "We only ever test <b>made-up</b> passwords."],
-   steps:[
-     {flag:"weakpw",label:"check a weak password",hint:"<span class='cy'>zgrep -c -x \"biscuit\" /usr/share/wordlists/rockyou.txt.gz</span>"},
-     {flag:"strongpw",label:"check a passphrase",hint:"<span class='cy'>zgrep -c -x \"purple-taco-rocket-lamp\" /usr/share/wordlists/rockyou.txt.gz</span>"},
-     {flag:"openssl",label:"make a random password",hint:"<span class='cy'>openssl rand -base64 12</span>"},
-     {flag:"stronger",label:"which is stronger?",hint:"<span class='cy'>answer stronger passphrase</span>"}],
-   outro:["<b>Longer beats trickier.</b> Four random words would take ~89,000 years to guess one-per-second. Use a password manager; check breaches at <span class='cy'>haveibeenpwned.com</span>."]},
-
-  {id:4,title:"Scanning Lab",week:"Scanning Lab",after:50,
-   intro:["A port is a numbered <b>door</b>; an open one has a service behind it.",
-     "You may scan only your own machine and the friendly practice server <span class='cy'>scanme.nmap.org</span>. Anything else, the lab stops you. Rule #1."],
-   steps:[
-     {flag:"scanme",label:"scan the practice server",hint:"<span class='cy'>nmap scanme.nmap.org</span>"},
-     {flag:"sver",label:"show service versions",hint:"<span class='cy'>nmap -sV scanme.nmap.org</span>"},
-     {flag:"openport",label:"open a door yourself",hint:"<span class='cy'>python3 -m http.server 8000</span>"},
-     {flag:"findport",label:"scan your new door",hint:"<span class='cy'>nmap -p 8000 localhost</span>"}],
-   outro:["Same tool, two jobs: a <b>defender</b> closes forgotten doors; an attacker breaks in. <b>Permission</b> is the difference. (<span class='cy'>shodan.io</span> has already scanned millions of open devices.)"]},
-
-  {id:5,title:"The Codebreaker",week:"Codebreaker",after:40,
-   intro:["NULL hides its orders in <b>ciphers</b>. Crack eight locked messages — each hides a <b>codeword</b> we'll need later to shut NULL down.",
-     "Type <span class='cy'>rungs</span>, then <span class='cy'>decode &lt;op&gt; \"&lt;message&gt;\"</span>. Ops: reverse rot13 morse base64 binary hex atbash. Boss = three layers."],
-   steps:[
-     {flag:"rung1",label:"crack your first rung",hint:"<span class='cy'>rungs</span>, copy rung 1, then <span class='cy'>decode reverse \"...\"</span>"},
-     {flag:"rung3x",label:"crack 3 rungs total",hint:"Ends with '='? base64. Dots/dashes? morse. 1s and 0s? binary."},
-     {flag:"boss",label:"beat the layered boss",hint:"Rung 8: <span class='cy'>decode base64</span>, feed output to <span class='cy'>decode reverse</span>, then <span class='cy'>decode rot13</span>."}],
-   outro:["Those codewords are the <b>shutdown key</b> for the finale — the more you crack, the better. CyberChef (<span class='cy'>cyberchef.org</span>) does this for real analysts."]},
-
-  {id:6,title:"Staying Safe Out There",week:"Staying Safe",after:30,
-   intro:["NULL spreads through everyday mistakes — phones, chargers, Wi-Fi. Wi-Fi is just <b>radio</b>: anyone nearby can hear it.",
-     "Type <span class='cy'>scenario</span>, then answer <span class='cy'>safe</span> or <span class='cy'>risky</span>."],
-   steps:[
-     {flag:"s0",label:"the found USB",hint:"<span class='cy'>scenario</span> then <span class='cy'>safe</span>/<span class='cy'>risky</span>."},
-     {flag:"s1",label:"the public charger",hint:"Does a USB port carry only power, or data too?"},
-     {flag:"s2",label:"the free Wi-Fi",hint:"Could a stranger copy a network name?"},
-     {flag:"s3",label:"the surprise AirDrop",hint:"Did you start this request?"},
-     {flag:"s4",label:"your own charger",hint:"A wall socket carries power only."},
-     {flag:"s5",label:"turning off auto-join",hint:"Your phone asks first now — good."}],
-   outro:["You're the safety expert now. <span class='warn'>Mission at home:</span> teach ONE habit to someone tonight."]},
-
-  {id:7,title:"Trace the Signal",week:"Operation NULL",after:18,
-   intro:["NULL left a <b>backdoor</b> on your machine that phones home. Find where it's calling, so we can hit its command node.",
-     "New tools unlocked: <span class='cy'>netstat</span>, <span class='cy'>dig</span>, <span class='cy'>traceroute</span>, <span class='cy'>grep</span>, <span class='cy'>base64</span>, <span class='cy'>find</span>, <span class='cy'>strings</span>."],
-   steps:[
-     {flag:"netstat",label:"spot the secret connection",hint:"<span class='cy'>netstat</span> lists open connections. Look for an ESTABLISHED one you didn't make."},
-     {flag:"dig",label:"turn the name into an IP",hint:"<span class='cy'>dig null-c2.darknet</span> — DNS maps a name to a number."},
-     {flag:"trace",label:"trace the route to NULL",hint:"<span class='cy'>traceroute null-c2.darknet</span> shows each hop along the way."},
-     {flag:"token",label:"recover the shutdown token",hint:"<span class='cy'>grep token ~/intercept.cap</span>, then <span class='cy'>base64 -d \"U0hVVERPV04=\"</span>."}],
-   outro:["You found NULL's command node (<span class='cy'>null-c2.darknet</span> → 66.66.6.6) and recovered the shutdown token. The agency has <b>authorised</b> you to take this one node down — Rule #1 satisfied."]},
-
-  {id:8,title:"Shutdown NULL",week:"Operation NULL · FINALE",after:0,
-   intro:["This is it. NULL's process is running on your machine as it spreads. Find it, arm the shutdown with the codewords you cracked, and end it.",
-     "NULL will fight back and <b>sabotage your terminal</b>. Whatever it disables, <span class='cy'>sudo repair all</span> brings back."],
-   steps:[
-     {flag:"ps",label:"find NULL's process",hint:"<span class='cy'>ps aux</span> (or <span class='cy'>ps aux | grep nulld</span>) — note its PID."},
-     {flag:"arm",label:"arm the shutdown",hint:"<span class='cy'>arm</span> — needs at least 4 codewords from Mission 5."},
-     {flag:"kill",label:"terminate NULL",hint:"<span class='cy'>sudo kill &lt;PID&gt;</span> (the PID from ps). Repair anything NULL disables first."}],
+     "Warm-up: NULL feeds on oversharing. Meet 'Jamie' (made up) and prove how much a stranger learns from a <b>digital footprint</b>."],
+   steps:[["whoami","say who you are","<span class='cy'>whoami</span>"],["readposts","read Jamie's posts","<span class='cy'>cd ~/cases/jamie</span>, <span class='cy'>ls</span>, <span class='cy'>cat post1.txt</span> (read a few)"],["school","find the school","<span class='cy'>answer school riverside</span>"],["pet","find the pet","<span class='cy'>answer pet biscuit</span>"],["bday","find the birthday","<span class='cy'>answer birthday oct 14</span>"],["gps","pull GPS from the photo","<span class='cy'>exiftool bedroom.jpg</span>"]],
+   outro:["Small clues add up: a jersey, a pet, a date and a photo's hidden GPS could lead a stranger to Jamie's door. Turn off your camera's location setting."]},
+  {id:2,title:"Terminal Crash Course",week:"Kali Crash Course",after:80,
+   intro:["Pros type instead of click. Prompt: <span class='cy'>kali@kali:~$</span> = who, which machine, where, ready.","Build a 'secret base', then run real tools on your OWN machine."],
+   steps:[["pwd","where am I?","<span class='cy'>pwd</span>"],["mkbase","make a folder","<span class='cy'>mkdir base</span>"],["cdbase","go into it","<span class='cy'>cd base</span>"],["writeflag","write a file","<span class='cy'>echo hi &gt; flag.txt</span>"],["readflag","read it back","<span class='cy'>cat flag.txt</span>"],["figlet","giant text","<span class='cy'>figlet YOURNAME</span>"],["ipa","your address","<span class='cy'>ip a</span>"],["ping","ping yourself","<span class='cy'>ping -c 4 localhost</span>"],["scanlocal","scan your doors","<span class='cy'>nmap localhost</span>"]],
+   outro:["You moved by typing and ran real tools, all in your own lab. An error in red is usually a typo. <span class='cy'>Ctrl+C</span> stops anything."]},
+  {id:3,title:"Strong Passwords",week:"Week 2",after:74,
+   intro:["Kali ships with <b>rockyou.txt</b> (~14M leaked passwords). NULL loves weak ones — let's find them first. Made-up passwords only."],
+   steps:[["weakpw","check a weak password","<span class='cy'>zgrep -c -x \"biscuit\" /usr/share/wordlists/rockyou.txt.gz</span>"],["strongpw","check a passphrase","<span class='cy'>zgrep -c -x \"purple-taco-rocket-lamp\" /usr/share/wordlists/rockyou.txt.gz</span>"],["openssl","make a random password","<span class='cy'>openssl rand -base64 12</span>"],["stronger","which is stronger?","<span class='cy'>answer stronger passphrase</span>"]],
+   outro:["Longer beats trickier. Four random words would take ~89,000 years to guess. Use a manager; check breaches at haveibeenpwned.com."]},
+  {id:4,title:"Scanning Lab",week:"Scanning Lab",after:68,
+   intro:["A port is a numbered <b>door</b>; an open one has a service behind it. Scan only your own machine and <span class='cy'>scanme.nmap.org</span> (the official practice server). Anything else, the lab stops you."],
+   steps:[["scanme","scan the practice server","<span class='cy'>nmap scanme.nmap.org</span>"],["sver","show service versions","<span class='cy'>nmap -sV scanme.nmap.org</span>"],["openport","open a door yourself","<span class='cy'>python3 -m http.server 8000</span>"],["findport","scan your new door","<span class='cy'>nmap -p 8000 localhost</span>"]],
+   outro:["Same tool, two jobs: a defender closes forgotten doors; an attacker breaks in. <b>Permission</b> is the difference."]},
+  {id:5,title:"The Codebreaker",week:"Codebreaker",after:61,
+   intro:["NULL hides orders in <b>ciphers</b>. Crack eight locked messages — each hides a <b>codeword</b> you'll need to shut NULL down.","<span class='cy'>rungs</span> lists them; <span class='cy'>decode &lt;op&gt; \"&lt;msg&gt;\"</span>. Ops: reverse rot13 morse base64 binary hex atbash. Boss = three layers."],
+   steps:[["rung1","crack your first rung","<span class='cy'>rungs</span>, then <span class='cy'>decode reverse \"...\"</span>"],["rung3x","crack 3 rungs total","Ends with '='? base64. Dots/dashes? morse. 1s/0s? binary."],["boss","beat the layered boss","Rung 8: <span class='cy'>decode base64</span> → <span class='cy'>decode reverse</span> → <span class='cy'>decode rot13</span>"]],
+   outro:["Those codewords are the finale's shutdown key — crack as many as you can. Analysts do this in CyberChef (cyberchef.org)."]},
+  {id:6,title:"Staying Safe Out There",week:"Staying Safe",after:54,
+   intro:["NULL spreads through everyday mistakes — phones, chargers, Wi-Fi. Type <span class='cy'>scenario</span>, then <span class='cy'>safe</span> or <span class='cy'>risky</span>."],
+   steps:[["s0","the found USB","<span class='cy'>scenario</span> then <span class='cy'>safe</span>/<span class='cy'>risky</span>"],["s1","the public charger","Power only, or data too?"],["s2","the free Wi-Fi","Could a name be copied?"],["s3","the surprise AirDrop","Did you start it?"],["s4","your own charger","Wall socket = power only"],["s5","turning off auto-join","Phone asks first now"]],
+   outro:["You're the safety expert now. Teach ONE habit to someone at home tonight."]},
+  {id:7,title:"Web Recon & Enumeration",week:"Operation NULL",after:46,
+   intro:["NULL is hiding on a web server in our lab: <span class='cy'>vuln-shop.lab</span> (10.0.2.20) — our own practice box, so we're clear to test it.","Map it the way a web pentester does. New tools: <span class='cy'>whatweb nikto gobuster whois</span> + <span class='cy'>curl</span>."],
+   steps:[["web_fp","fingerprint the site","<span class='cy'>whatweb 10.0.2.20</span> — what software is it running?"],["web_nikto","scan for weaknesses","<span class='cy'>nikto -h 10.0.2.20</span>"],["web_dirs","find hidden folders","<span class='cy'>gobuster dir -u http://10.0.2.20 -w /usr/share/wordlists/common.txt</span>"],["web_loot","read the leaked backup","<span class='cy'>curl 10.0.2.20/backup/users.sql</span> — note the admin's password hash."]],
+   outro:["You found a hidden backup leaking an admin password <b>hash</b>. Developers leave these behind constantly. Next: crack it."]},
+  {id:8,title:"Password Attacks",week:"Operation NULL",after:38,
+   intro:["You recovered a hash from the backup (saved in <span class='cy'>~/hash.txt</span>). Figure out what it is and crack it — then try the login.","New tools: <span class='cy'>hashid john hashcat hydra</span>. (All against our own practice box.)"],
+   steps:[["pw_id","identify the hash","<span class='cy'>hashid 5f4dcc3b5aa765d61d8327deb882cf99</span>"],["pw_crack","crack it offline","<span class='cy'>john ~/hash.txt</span> (or <span class='cy'>hashcat -m 0 ~/hash.txt</span>)"],["pw_hydra","brute the login","<span class='cy'>hydra -l admin -P /usr/share/wordlists/rockyou.txt 10.0.2.20 http-get /admin</span>"]],
+   outro:["'password' as an MD5 falls instantly. That's why real sites use <b>slow, salted</b> hashes — and why you never reuse passwords."]},
+  {id:9,title:"Wireless Recon",week:"Operation NULL",after:30,
+   intro:["NULL may be sniffing our Wi-Fi. Audit the club's OWN access point, <span class='cy'>CLUB-LAB-AP</span> — ours, so we're authorised. Do NOT touch the neighbours.","The aircrack-ng suite: <span class='cy'>airmon-ng airodump-ng aireplay-ng aircrack-ng</span>."],
+   steps:[["w_mon","enable monitor mode","<span class='cy'>airmon-ng start wlan0</span>"],["w_scan","find access points","<span class='cy'>airodump-ng wlan0mon</span>"],["w_cap","capture the handshake","<span class='cy'>airodump-ng -c 6 --bssid AA:BB:CC:DD:EE:01 -w capture wlan0mon</span>, then <span class='cy'>aireplay-ng --deauth 5 -a AA:BB:CC:DD:EE:01 wlan0mon</span>"],["w_crack","crack the Wi-Fi key","<span class='cy'>aircrack-ng -w /usr/share/wordlists/rockyou.txt capture-01.cap</span>"]],
+   outro:["'club-wifi-2024' cracked in seconds. A long, random Wi-Fi passphrase (20+ chars) makes this attack hopeless — that's the lesson for home."]},
+  {id:10,title:"Traffic & Sniffing",week:"Operation NULL",after:22,
+   intro:["See what travels across a network. On our own lab LAN: discover hosts, then watch the packets — and learn why <b>HTTPS</b> matters.","New tools: <span class='cy'>netdiscover tcpdump wireshark</span>."],
+   steps:[["sn_disc","list hosts on the LAN","<span class='cy'>netdiscover</span>"],["sn_cap","capture live packets","<span class='cy'>tcpdump -i eth0</span> — watch for a login in plain text"],["sn_lesson","why was that dangerous?","<span class='cy'>answer protocol https</span>"]],
+   outro:["A plain HTTP login sends your password in the clear — anyone on the network can read it. <b>HTTPS</b> (the padlock) encrypts it. Always look for the lock."]},
+  {id:11,title:"The Exploit",week:"Operation NULL",after:14,
+   intro:["NULL's command relay, <span class='cy'>null-relay.lab</span> (10.0.2.6), runs an ancient, vulnerable service. Agency-authorised: break in and get a foothold.","The pro workflow: <span class='cy'>nmap -sV</span> → <span class='cy'>searchsploit</span> → <span class='cy'>msfconsole</span> (Metasploit) → a shell."],
+   steps:[["ex_scan","find the weak service","<span class='cy'>nmap -sV 10.0.2.6</span> — note the version."],["ex_search","find a known exploit","<span class='cy'>searchsploit vsftpd 2.3.4</span>"],["ex_session","exploit it","<span class='cy'>msfconsole</span>, then: <span class='cy'>search vsftpd</span> → <span class='cy'>use 0</span> → <span class='cy'>set RHOSTS 10.0.2.6</span> → <span class='cy'>exploit</span>"],["ex_loot","grab the loot","In the session: <span class='cy'>getuid</span> and <span class='cy'>cat /root/flag.txt</span>"]],
+   outro:["An out-of-date service is an open door. Metasploit bundles known exploits (tied to CVE numbers) — which is exactly why patching and updates matter so much."]},
+  {id:12,title:"Trace the Signal",week:"Operation NULL",after:7,
+   intro:["The relay's loot revealed NULL's command node. Trace exactly where it phones home.","Tools: <span class='cy'>netstat dig traceroute grep base64</span>."],
+   steps:[["netstat","spot the secret connection","<span class='cy'>netstat</span> — find an ESTABLISHED link you never made"],["dig","name → IP","<span class='cy'>dig null-c2.darknet</span>"],["trace","trace the route","<span class='cy'>traceroute null-c2.darknet</span>"],["token","recover the shutdown token","<span class='cy'>grep token ~/intercept.cap</span>, then <span class='cy'>base64 -d \"U0hVVERPV04=\"</span>"]],
+   outro:["NULL's node is pinned (null-c2.darknet → 66.66.6.6) and the shutdown token is recovered. Time to end it."]},
+  {id:13,title:"Shutdown NULL",week:"Operation NULL · FINALE",after:0,
+   intro:["This is it. Find NULL's process, arm the shutdown with your codewords, and terminate it. NULL will sabotage your terminal — <span class='cy'>sudo repair all</span> fixes anything it disables."],
+   steps:[["ps","find NULL's process","<span class='cy'>ps aux | grep nulld</span> — note the PID"],["arm","arm the shutdown","<span class='cy'>arm</span> — needs 4+ codewords from Mission 5"],["kill","terminate NULL","<span class='cy'>sudo kill &lt;PID&gt;</span>"]],
    outro:[]}
 ];
+MISSIONS.forEach(m=>{m.steps=m.steps.map(s=>({flag:s[0],label:s[1],hint:s[2]}));m.done=false;});
 
-/* ======================= State ======================= */
-const S={mi:0,flags:{},learn:true,scenIdx:0,openPort:null,postsRead:new Set(),
-  history:[],hIdx:0,cmdCount:0,armed:false,
-  null:{control:88,locked:{},decoys:0,suspend:false}};
-MISSIONS.forEach(m=>m.done=false);
+/* ===================== State ===================== */
+const S={mi:0,flags:{},learn:true,scenIdx:0,openPort:null,postsRead:new Set(),history:[],hIdx:0,cmdCount:0,armed:false,
+  mode:null,msf:{module:null,rhosts:null,lhost:null},wifi:{mon:false,capturing:false},booting:true,
+  null:{control:88,locked:{},decoys:0}};
 
-/* ======================= Output + capture (for pipes) ======================= */
+/* ===================== Output ===================== */
 const screen=document.getElementById("screen"),input=document.getElementById("input");
 let CAP=null;
 function esc(s){return String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");}
 function stripTags(h){const d=document.createElement("div");d.innerHTML=h;return d.textContent||"";}
-function out(html,cls){
-  if(CAP){CAP.push({html,cls,text:stripTags(html)});return;}
-  const d=document.createElement("div");d.className="line"+(cls?(" "+cls):"");d.innerHTML=html;
-  screen.appendChild(d);screen.scrollTop=screen.scrollHeight;
-}
+function outNode(html,cls){const d=document.createElement("div");d.className="line"+(cls?(" "+cls):"");d.innerHTML=html;screen.appendChild(d);screen.scrollTop=screen.scrollHeight;return d;}
+function out(html,cls){if(CAP){CAP.push({html,cls,text:stripTags(html)});return;}outNode(html,cls);}
 function blank(){out("&nbsp;");}
 function teach(t){if(S.learn)out("<span class='tag'>↳ real tool:</span> "+t,"teach");}
 function glitch(){document.body.classList.remove("glitch");void document.body.offsetWidth;document.body.classList.add("glitch");}
 function M(){return MISSIONS[S.mi];}
-function ps1(){return "kali@kali:"+cwdLabel()+"$ ";}
 function codewords(){return RUNGS.filter(r=>S.flags["word_"+r.n]).map(r=>r.word);}
-
+function ps1(){
+  if(S.mode==="meterpreter")return "meterpreter > ";
+  if(S.mode==="msf")return S.msf.module?("msf6 exploit("+S.msf.module.short+") > "):"msf6 > ";
+  return "kali@kali:"+cwdLabel()+"$ ";
+}
 function refresh(){
   document.getElementById("ps1").textContent=ps1();
   const m=M();
@@ -267,447 +234,230 @@ function refresh(){
   document.getElementById("count").textContent=done+"/"+m.steps.length;
   const st=document.getElementById("steps");st.innerHTML="";
   m.steps.forEach(s=>{const p=document.createElement("span");p.className="pip"+(S.flags[s.flag]?" done":"");p.title=s.label;st.appendChild(p);});
-  const c=S.null.control;document.getElementById("bar").style.width=c+"%";
-  document.getElementById("pct").textContent=c+"%";
-  const col=c>60?"#ff2d2d":c>30?"#ffb627":"#39ff14";
-  document.getElementById("bar").style.background=col;document.getElementById("pct").style.color=col;
+  const c=S.null.control,col=c>60?"#ff2d2d":c>30?"#ffb627":"#39ff14";
+  const bar=document.getElementById("bar");bar.style.width=c+"%";bar.style.background=col;
+  const pct=document.getElementById("pct");pct.textContent=c+"%";pct.style.color=col;
   document.querySelector(".null").firstChild.textContent=c<=0?"NULL OFFLINE ":"NULL ";
 }
 function nextStep(){return M().steps.find(s=>!S.flags[s.flag]);}
-function setFlag(f){
-  if(S.flags[f])return;
-  S.flags[f]=true;
-  const m=M(),step=m.steps.find(s=>s.flag===f);
-  if(step)out("  <span class='ok'>✓</span> <span class='muted'>objective:</span> "+step.label);
-  if(m.steps.every(s=>S.flags[s.flag])&&!m.done){m.done=true;completeMission();}
-  refresh();
-}
+function setFlag(f){if(S.flags[f])return;S.flags[f]=true;const m=M(),step=m.steps.find(s=>s.flag===f);if(step)out("  <span class='ok'>✓</span> <span class='muted'>objective:</span> "+step.label);if(m.steps.every(s=>S.flags[s.flag])&&!m.done){m.done=true;completeMission();}refresh();}
 
-/* ======================= NULL interference ======================= */
-const TAUNTS=["you cannot close every door, little analyst.","i am in 4,000,000 machines. you are one.","delete me? i am backed up everywhere.","tidy your tools. i'll wait.","every password you forget feeds me.","the internet was mine before you arrived."];
-const LOCKPOOL=["figlet","date","uname","strings","history","find","curl","exiftool","dig"];
+/* ===================== NULL interference ===================== */
+const TAUNTS=["you cannot close every door, little analyst.","i am in 4,000,000 machines. you are one.","delete me? i am backed up everywhere.","tidy your tools. i'll wait.","every weak password feeds me.","the internet was mine before you arrived."];
+const LOCKPOOL=["figlet","date","uname","strings","history","find","whatweb","dig","netdiscover","whois"];
 function nullSay(t){out("<b>N U L L //</b> "+t,"nullsay");glitch();}
 function lockCmd(c){S.null.locked[c]=true;}
-function fireRetaliation(){
-  const avail=LOCKPOOL.filter(c=>!S.null.locked[c]);
-  if(!avail.length)return;
-  const c=avail[Math.floor(Math.random()*avail.length)];
-  lockCmd(c);
-  nullSay("you pushed me back? then i take "+c+" from you. [disabled] — restore it: sudo repair "+c);
-}
-function fireRandom(){
-  if(S.null.suspend||S.null.control<=0)return;
-  if(S.cmdCount<5||Math.random()>0.16)return;
-  const roll=Math.random();
-  if(roll<0.6){ nullSay(TAUNTS[Math.floor(Math.random()*TAUNTS.length)]); }
-  else if(S.null.decoys<4){
-    S.null.decoys++;const f="NULL_"+S.null.decoys+".txt";
-    const home=node(HOME);home[f]="NULL was here. I drop files faster than you delete them. ("+f+")";
-    nullSay("i left something in your home folder. find it with ls.");
-  } else { nullSay(TAUNTS[Math.floor(Math.random()*TAUNTS.length)]); }
-}
+function fireRetaliation(){const avail=LOCKPOOL.filter(c=>!S.null.locked[c]);if(!avail.length)return;const c=avail[Math.floor(Math.random()*avail.length)];lockCmd(c);nullSay("you pushed me back? then i take "+c+" from you. restore it: sudo repair "+c);}
+function fireRandom(){if(S.null.control<=0||S.mode)return;if(S.cmdCount<6||Math.random()>0.14)return;if(Math.random()<0.6)nullSay(TAUNTS[Math.floor(Math.random()*TAUNTS.length)]);else if(S.null.decoys<4){S.null.decoys++;const f="NULL_"+S.null.decoys+".txt";node(HOME)[f]="NULL was here. I drop files faster than you delete them.";nullSay("i left something in your home folder. ls to see it.");}else nullSay(TAUNTS[Math.floor(Math.random()*TAUNTS.length)]);}
 
-/* ======================= Mission flow ======================= */
-function startMission(i){
-  S.mi=i;const m=M();
-  blank();out("── MISSION "+m.id+" · "+m.title+"  ("+m.week+") ──","mag");
-  m.intro.forEach(l=>out(l,"fg"));
-  blank();out("Objectives: <span class='cy'>objective</span> · stuck? <span class='cy'>hint</span> · big picture? <span class='cy'>sitrep</span>","muted");
-  if(m.id===5)out("Reminder: <span class='cy'>rungs</span> lists the locked messages.","muted");
-  if(m.id===6)out("Reminder: <span class='cy'>scenario</span> shows the next situation.","muted");
-  if(m.id===8)out("Reminder: repair anything NULL disables with <span class='cy'>sudo repair all</span>.","muted");
-  refresh();
-}
-function completeMission(){
-  const m=M();
-  blank();out("███ MISSION "+m.id+" COMPLETE — "+m.title+" ███","ok");
-  m.outro.forEach(l=>out(l,"fg"));
-  if(typeof m.after==="number"&&m.after<S.null.control){
-    const old=S.null.control;S.null.control=m.after;refresh();
-    out("NULL's control of the internet pushed back: "+old+"% → <span class='ok'>"+m.after+"%</span>.","warn");
+/* ===================== Mission flow ===================== */
+function startMission(i){S.mi=i;const m=M();blank();out("── MISSION "+m.id+" · "+m.title+"  ("+m.week+") ──","mag");m.intro.forEach(l=>out(l,"fg"));blank();out("Objectives: <span class='cy'>objective</span> · stuck? <span class='cy'>hint</span> · toolkit: <span class='cy'>tools</span> · big picture: <span class='cy'>sitrep</span>","muted");if(m.id===5)out("Reminder: <span class='cy'>rungs</span> lists the locked messages.","muted");if(m.id===6)out("Reminder: <span class='cy'>scenario</span> shows the next situation.","muted");refresh();}
+function completeMission(){const m=M();blank();out("███ MISSION "+m.id+" COMPLETE — "+m.title+" ███","ok");m.outro.forEach(l=>out(l,"fg"));if(typeof m.after==="number"&&m.after<S.null.control){const old=S.null.control;S.null.control=m.after;refresh();out("NULL's control pushed back: "+old+"% → <span class='ok'>"+m.after+"%</span>.","warn");}autosave();if(m.id===13){victory();return;}fireRetaliation();const next=MISSIONS[S.mi+1];blank();if(next)out("Next: <span class='cy'>mission "+next.id+"</span>  ("+next.title+")","warn");}
+function victory(){blank();out("<div class='banner'>"+esc(banner("NULL DOWN"))+"</div>","ok");nullSay("no. no. i was everywh— ███ connection reset ███");out("NULL's process is terminated. Its control of the internet: <span class='ok'>0%</span>.","ok");out("You chained every skill: footprints, terminal, passwords, scanning, ciphers, safety, web, wireless, sniffing, exploitation, tracing, and the kill.","fg");out("That's the real craft of defensive security — with a safety net. Outstanding, analyst.","fg");blank();out("Replay any mission with <span class='cy'>missions</span>. You saved the internet. ★","warn");}
+
+/* ===================== Metasploit sub-shell (Mission 11) ===================== */
+const MSFMODS=[{path:"exploit/unix/ftp/vsftpd_234_backdoor",short:"vsftpd_234_backdoor",target:"10.0.2.6"}];
+function msfHandle(raw){
+  const parts=raw.trim().split(/\s+/),c=(parts[0]||"").toLowerCase(),rest=parts.slice(1);
+  if(S.mode==="meterpreter"){
+    if(c==="getuid"){out("Server username: root (uid=0)","fg");teach("<span class='cy'>getuid</span> shows who you are on the target. <b>root</b> = full control.");setFlag("ex_loot");return;}
+    if(c==="sysinfo"){out("Computer : null-relay\nOS : Linux 3.2.0\nMeterpreter : x86/linux","fg");return;}
+    if(c==="ls"){out("flag.txt   nulld_loader.sh   .bash_history","fg");return;}
+    if(c==="cat"){const f=rest[0]||"";if(/flag\.txt$/.test(f)){out("<span class='flag'>FLAG{metasploit_got_root}</span>","fg");out("nulld_loader.sh → phones home to <span class='mag'>null-c2.darknet</span>","muted");setFlag("ex_loot");}else if(/loader/.test(f))out("#!/bin/sh\nwhile true; do beacon null-c2.darknet:6666; done","fg");else out("cat: "+f+": No such file","err");return;}
+    if(c==="shell"){out("Process 1 created. Channel 1 opened.\n$ (type whoami, or 'exit')","muted");return;}
+    if(c==="whoami"){out("root","fg");return;}
+    if(c==="background"||c==="exit"){S.mode="msf";out("Backgrounding session... msf6 >","muted");refresh();return;}
+    out("[meterpreter] unknown command: "+c+"   (try getuid, sysinfo, ls, cat flag.txt, exit)","err");return;
   }
-  if(m.id===8){victory();return;}
-  fireRetaliation();
-  const next=MISSIONS[S.mi+1];
-  blank();
-  if(next)out("Next: <span class='cy'>mission "+next.id+"</span>  ("+next.title+")","warn");
-}
-function victory(){
-  blank();
-  out("<div class='banner'>"+esc(banner("NULL DOWN"))+"</div>","ok");
-  nullSay("no. no. i was everywh— ███ connection reset ███");
-  out("NULL's process is terminated. Its control of the internet: <span class='ok'>0%</span>.","ok");
-  out("You chained every skill: footprints, the terminal, passwords, scanning, ciphers, safety, tracing, and the kill.","fg");
-  out("That's real defensive security — recon, analysis, and response — with a safety net. Well done, analyst.","fg");
-  blank();out("Replay any mission with <span class='cy'>missions</span>. Thanks for saving the internet. ★","warn");
+  // msf6 console
+  if(c==="help"){out("search &lt;term&gt; · use &lt;n|module&gt; · show options · set RHOSTS &lt;ip&gt; · exploit · back · exit","cy");return;}
+  if(c==="search"){const term=rest.join(" ").toLowerCase();const hits=MSFMODS.filter(m=>m.path.includes(term||"vsftpd"));S.msf.results=hits;out("Matching Modules\n================","muted");hits.forEach((m,i)=>out("  "+i+"  <span class='cy'>"+m.path+"</span>  excellent  VSFTPD v2.3.4 Backdoor Command Execution","fg"));if(!hits.length)out("No results.","muted");else{teach("<span class='cy'>search</span> finds exploit modules by name, service or CVE. The number on the left is a shortcut for <span class='cy'>use</span>.");setFlag("ex_search_in_msf");}return;}
+  if(c==="use"){let mod=null;const a=rest[0];if(/^\d+$/.test(a)&&S.msf.results)mod=S.msf.results[parseInt(a,10)];else mod=MSFMODS.find(m=>m.path===a||m.short===a);if(!mod)return out("[-] Invalid module.","err");S.msf.module=mod;out("Using configured payload cmd/unix/interact","muted");refresh();teach("<span class='cy'>use</span> selects a module. The prompt now shows which exploit you've loaded.");return;}
+  if(c==="show"&&(rest[0]||"").toLowerCase()==="options"){if(!S.msf.module)return out("[-] use a module first.","err");out("Module options:\n  Name    Current Setting   Required\n  RHOSTS  "+(S.msf.rhosts||"")+(S.msf.rhosts?"":"")+"               yes (the target)\n  RPORT   21                yes","fg");teach("<span class='cy'>show options</span> lists what the exploit needs. <b>RHOSTS</b> = the target to attack.");return;}
+  if(c==="set"){const k=(rest[0]||"").toUpperCase(),v=rest[1]||"";if(k==="RHOSTS"){S.msf.rhosts=v;out("RHOSTS => "+v,"fg");}else if(k==="LHOST"){S.msf.lhost=v;out("LHOST => "+v,"fg");}else out(k+" => "+v,"fg");return;}
+  if(c==="back"){S.msf.module=null;refresh();return;}
+  if(c==="exit"||c==="quit"){S.mode=null;out("Leaving msfconsole.","muted");refresh();return;}
+  if(c==="exploit"||c==="run"){
+    if(!S.msf.module)return out("[-] No module selected. Try: search vsftpd, then use 0","err");
+    if(!S.msf.rhosts)return out("[-] RHOSTS not set. Try: set RHOSTS 10.0.2.6","err");
+    if(!isAllowed(S.msf.rhosts))return ruleBlock(S.msf.rhosts);
+    if(S.msf.rhosts!==S.msf.module.target)return out("[*] Exploit completed, but no session was created. (Is "+S.msf.rhosts+" the right target?)","warn");
+    out("[*] "+S.msf.rhosts+":21 - Banner: 220 (vsFTPd 2.3.4)","muted");
+    out("[+] "+S.msf.rhosts+":21 - Backdoor service has been spawned, handling...","muted");
+    out("[*] Command shell session 1 opened ("+(S.msf.lhost||"10.0.2.15")+" -> "+S.msf.rhosts+")","ok");
+    S.mode="meterpreter";refresh();
+    teach("The exploit triggered a hidden backdoor in that old vsftpd and gave you a <b>session</b> on the target. Type <span class='cy'>getuid</span>, then <span class='cy'>cat /root/flag.txt</span>.");
+    setFlag("ex_session");return;
+  }
+  out("[-] Unknown command: "+c+"  (help, search, use, show options, set, exploit, exit)","err");
 }
 
-/* ======================= Commands ======================= */
+/* ===================== Commands ===================== */
 const CMDS={
-  help(){
-    out("Core: <span class='ok'>missions</span> · <span class='ok'>mission &lt;n&gt;</span> · <span class='ok'>objective</span> · <span class='ok'>hint</span> · <span class='ok'>sitrep</span> · <span class='ok'>learn</span> · <span class='ok'>man &lt;cmd&gt;</span> · <span class='ok'>clear</span>","cy");
-    out("Files: <span class='ok'>pwd ls cd cat mkdir echo&gt; find grep strings</span>","cy");
-    out("Tools: <span class='ok'>whoami figlet ip ping nmap exiftool zgrep openssl curl base64 sha256sum</span>","cy");
-    out("Network: <span class='ok'>dig netstat traceroute</span> · Processes: <span class='ok'>ps kill sudo</span>","cy");
-    out("Puzzles: <span class='ok'>decode rungs</span> · Safety: <span class='ok'>scenario safe risky</span>","cy");
-    out("Pipes work: e.g. <span class='cy'>ps aux | grep nulld</span>","muted");
-  },
-  sitrep(){
-    out("══ SITUATION REPORT ══","mag");
-    out("NULL controls <span class='err'>"+S.null.control+"%</span> of the internet. Push it to 0% by finishing all missions.","fg");
-    out("Missions cleared: "+MISSIONS.filter(m=>m.done).length+"/"+MISSIONS.length,"fg");
-    const cw=codewords();
-    out("Shutdown codewords recovered ("+cw.length+"/8): "+(cw.length?"<span class='ok'>"+cw.join(", ")+"</span>":"<span class='muted'>none yet — see Mission 5</span>"));
-    const locked=Object.keys(S.null.locked).filter(k=>S.null.locked[k]);
-    if(locked.length)out("NULL has disabled: <span class='err'>"+locked.join(", ")+"</span> — fix with <span class='cy'>sudo repair all</span>.","warn");
-  },
-  missions(){
-    out("Missions — <span class='cy'>mission &lt;n&gt;</span>:","cy");
-    MISSIONS.forEach((m,i)=>out("  "+(m.done?"<span class='ok'>[✓]</span>":"<span class='muted'>[ ]</span>")+" <span class='fg'>"+m.id+".</span> "+m.title+"  <span class='muted'>("+m.week+")</span>"+(i===S.mi?"  <span class='warn'>← current</span>":"")));
-  },
-  mission(a){const n=parseInt(a[0],10);if(!n||n<1||n>MISSIONS.length)return out("usage: mission <1-"+MISSIONS.length+">","err");startMission(n-1);},
-  objective(){
-    const m=M();out("MISSION "+m.id+": "+m.title,"warn");
-    m.steps.forEach(s=>out("  "+(S.flags[s.flag]?"<span class='ok'>✓</span>":"<span class='muted'>○</span>")+" "+s.label));
-    const nx=nextStep();if(nx)out("Next: <span class='cy'>"+nx.label+"</span>","muted");else out("All done — pick the next mission.","ok");
-  },
+  help(){out("Core: <span class='ok'>missions</span> · <span class='ok'>mission &lt;n&gt;</span> · <span class='ok'>objective</span> · <span class='ok'>hint</span> · <span class='ok'>tools</span> · <span class='ok'>sitrep</span> · <span class='ok'>learn</span> · <span class='ok'>man &lt;cmd&gt;</span> · <span class='ok'>clear</span>","cy");out("Progress: <span class='ok'>save</span> · <span class='ok'>restore</span> · <span class='ok'>restart confirm</span>  (progress also auto-saves after each mission)","cy");out("Type <span class='cy'>tools</span> for the full toolkit by category. Pipes work: <span class='cy'>ps aux | grep nulld</span>","muted");},
+  tools(){out("══ TOOLKIT ══","mag");
+    [["Files","pwd ls cd cat mkdir echo> find grep strings"],["Recon/Scan","whoami ip ping nmap netdiscover dig whois traceroute netstat"],["Web","curl whatweb nikto gobuster"],["Passwords","zgrep openssl hashid john hashcat hydra"],["Wireless","airmon-ng airodump-ng aireplay-ng aircrack-ng"],["Sniffing","tcpdump wireshark"],["Exploit","searchsploit msfconsole nc"],["Forensics","exiftool strings sha256sum"],["Puzzles","decode rungs"],["Processes","ps kill sudo"]].forEach(r=>out("  <span class='warn'>"+r[0]+":</span> <span class='fg'>"+r[1]+"</span>"));
+    out("<span class='cy'>man &lt;tool&gt;</span> explains any of them.","muted");},
+  sitrep(){out("══ SITUATION REPORT ══","mag");out("NULL controls <span class='err'>"+S.null.control+"%</span> of the internet. Push it to 0% by finishing all missions.","fg");out("Missions cleared: "+MISSIONS.filter(m=>m.done).length+"/"+MISSIONS.length,"fg");const cw=codewords();out("Shutdown codewords ("+cw.length+"/8): "+(cw.length?"<span class='ok'>"+cw.join(", ")+"</span>":"<span class='muted'>none yet (Mission 5)</span>"));const L=Object.keys(S.null.locked).filter(k=>S.null.locked[k]);if(L.length)out("NULL disabled: <span class='err'>"+L.join(", ")+"</span> — <span class='cy'>sudo repair all</span>.","warn");},
+  missions(){out("Missions — <span class='cy'>mission &lt;n&gt;</span>:","cy");MISSIONS.forEach((m,i)=>out("  "+(m.done?"<span class='ok'>[✓]</span>":"<span class='muted'>[ ]</span>")+" <span class='fg'>"+m.id+".</span> "+m.title+"  <span class='muted'>("+m.week+")</span>"+(i===S.mi?"  <span class='warn'>← current</span>":"")));},
+  mission(a){const n=parseInt(a[0],10);if(!n||n<1||n>MISSIONS.length)return out("usage: mission <1-"+MISSIONS.length+">","err");S.mode=null;startMission(n-1);},
+  objective(){const m=M();out("MISSION "+m.id+": "+m.title,"warn");m.steps.forEach(s=>out("  "+(S.flags[s.flag]?"<span class='ok'>✓</span>":"<span class='muted'>○</span>")+" "+s.label));const nx=nextStep();if(nx)out("Next: <span class='cy'>"+nx.label+"</span>","muted");else out("All done — pick the next mission.","ok");},
   hint(){const nx=nextStep();if(!nx)return out("Mission complete! Type <span class='cy'>missions</span>.","ok");out("HINT: "+nx.hint,"warn");},
   learn(){S.learn=!S.learn;out("Teaching notes "+(S.learn?"ON":"OFF")+".","ok");},
   clear(){screen.innerHTML="";},
-
-  whoami(){out("kali");teach("<span class='cy'>whoami</span> prints your username — confirms which account you're acting as.");setFlag("whoami");},
-  pwd(){out("/"+CWD.join("/"));teach("<span class='cy'>pwd</span> = print working directory: 'where am I?'");setFlag("pwd");},
-  ls(a){
-    const all=a.some(x=>/^-/.test(x)&&x.includes("a")),long=a.some(x=>/^-/.test(x)&&x.includes("l"));
-    const target=a.filter(x=>!x.startsWith("-"))[0];
-    const n=target?node(resolve(target)):node(CWD);
-    if(n===undefined)return out("ls: cannot access '"+(target||"")+"': No such file or directory","err");
-    if(typeof n==="string")return out(target);
-    let names=Object.keys(n).filter(k=>all||!k.startsWith("."));
-    if(!names.length)return out("(empty)","muted");
-    if(long)names.forEach(k=>{const dir=typeof n[k]==="object";out((dir?"drwxr-xr-x":"-rw-r--r--")+"  kali  "+(dir?"4096":String(40+k.length*6)).padStart(5," ")+"  "+(dir?("<span class='cy'>"+k+"</span>"):(k.startsWith(".")?("<span class='mag'>"+k+"</span>"):k)));});
-    else out(names.map(k=>typeof n[k]==="object"?("<span class='cy'>"+k+"</span>"):(k.startsWith(".")?("<span class='mag'>"+k+"</span>"):k)).join("   "));
-    if(all)teach("<span class='cy'>ls -la</span> reveals <b>hidden</b> files (names starting with a dot) with size, date and permissions. Attackers hide here — so do defenders look here.");
-  },
-  cd(a){
-    const t=a[0]||"~",p=resolve(t),n=node(p);
-    if(n===undefined)return out("cd: "+t+": No such file or directory","err");
-    if(typeof n==="string")return out("cd: "+t+": Not a directory","err");
-    CWD=p;if(a[0]==="base")setFlag("cdbase");
-  },
-  cat(a){
-    const f=a[0];if(!f)return out("usage: cat <file>","err");
-    const p=resolve(f),n=node(p);
-    if(n===undefined)return out("cat: "+f+": No such file or directory","err");
-    if(typeof n==="object")return out("cat: "+f+": Is a directory","err");
-    out(esc(n),"fg");
-    const base=p[p.length-1];
-    if(p.slice(0,-1).join("/")==="home/kali/cases/jamie"&&base.startsWith("post")){S.postsRead.add(base);if(S.postsRead.size>=3)setFlag("readposts");}
-    if(base==="flag.txt")setFlag("readflag");
-    if(base.endsWith(".jpg"))teach("A .jpg is binary — <span class='cy'>cat</span> shows gibberish. Read its hidden data with <span class='cy'>exiftool "+base+"</span>.");
-  },
-  mkdir(a){
-    const name=a[0];if(!name)return out("usage: mkdir <name>","err");
-    const parent=node(CWD);if(typeof parent!=="object")return out("mkdir: cannot create here","err");
-    if(name in parent)return out("mkdir: cannot create directory '"+name+"': File exists","err");
-    parent[name]={};teach("<span class='cy'>mkdir</span> makes a new folder in the current directory.");
-    if(name==="base")setFlag("mkbase");
-  },
-  echo(a,raw){
-    const m=raw.match(/^echo\s+(.*?)\s*>\s*(\S+)\s*$/);
-    if(m){const text=m[1].replace(/^["']|["']$/g,""),file=m[2],parent=node(CWD);
-      if(typeof parent!=="object")return out("echo: cannot write here","err");
-      parent[file]=text;teach("<span class='cy'>echo TEXT &gt; file</span> writes TEXT into a file (<span class='cy'>&gt;</span> means 'send output to').");
-      if(file==="flag.txt")setFlag("writeflag");return;}
-    out(a.join(" "));
-  },
-  find(a){
-    const ni=a.indexOf("-name");let pat=ni>-1?a[ni+1].replace(/^["']|["']$/g,""):"*";
-    const re=new RegExp("^"+pat.replace(/[.+^${}()|[\]\\]/g,"\\$&").replace(/\*/g,".*")+"$","i");
-    const startArg=a[0]&&!a[0].startsWith("-")?a[0]:".";const start=resolve(startArg);
-    const base=node(start);if(base===undefined||typeof base!=="object")return out("find: '"+startArg+"': No such directory","err");
-    const res=[];(function walk(n,path){for(const k of Object.keys(n)){const cp=path+"/"+k;if(re.test(k))res.push(cp);if(typeof n[k]==="object")walk(n[k],cp);}})(base,startArg==="."?".":startArg);
-    out(res.length?res.join("\n"):"(no matches)","fg");
-    teach("<span class='cy'>find</span> walks folders looking for files by name. <span class='cy'>-name \"*.log\"</span> matches with a wildcard — vital for hunting through a messy system.");
-  },
-  grep(a,raw){
-    const m=raw.match(/grep\s+(?:-\w+\s+)*["']?([^"']+?)["']?\s+(\S+)\s*$/);
-    if(!m)return out('usage: grep PATTERN FILE   (or:  <cmd> | grep PATTERN)',"err");
-    const pat=m[1],file=m[2],n=node(resolve(file));
-    if(n===undefined)return out("grep: "+file+": No such file or directory","err");
-    if(typeof n==="object")return out("grep: "+file+": Is a directory","err");
-    const hits=n.split("\n").filter(l=>l.toLowerCase().includes(pat.toLowerCase()));
-    out(hits.length?hits.map(esc).join("\n"):"(no match)",hits.length?"fg":"muted");
-    teach("<span class='cy'>grep</span> prints only the lines that match your word — the fastest way to sift logs, dumps and captures.");
-    if(/token/i.test(pat)&&file.includes("intercept"))out("Found it. Now decode the base64: <span class='cy'>base64 -d \"U0hVVERPV04=\"</span>","muted");
-  },
-  strings(a){
-    const f=a[0];if(!f)return out("usage: strings <file>","err");
-    const n=node(resolve(f));if(n===undefined)return out("strings: '"+f+"': No such file","err");
-    if(typeof n==="object")return out("strings: "+f+": Is a directory","err");
-    const readable=n.split(/[^\x20-\x7e]+/).filter(s=>s.length>=4);
-    out(readable.map(esc).join("\n"),"fg");
-    teach("<span class='cy'>strings</span> pulls the human-readable text out of a binary file. Malware often leaks its server address or secrets this way.");
-  },
-  figlet(a){const t=(a.join(" ")||"HELLO").toUpperCase().slice(0,14);out("<div class='banner'>"+esc(banner(t))+"</div>");teach("<span class='cy'>figlet</span> draws big ASCII-art text — fun, and a gentle 'input in, output out' lesson.");setFlag("figlet");},
-  ip(){out("1: lo: &lt;LOOPBACK,UP&gt; inet 127.0.0.1/8","fg");out("2: eth0: &lt;BROADCAST,UP&gt; inet <span class='cy'>10.0.2.15</span>/24  (your lab address)","fg");teach("<span class='cy'>ip a</span> lists your network interfaces and addresses — your computer's 'house number'. <span class='cy'>lo</span> is localhost (yourself).");setFlag("ipa");},
-  ping(a){
-    const host=a.length?a[a.length-1]:"";if(!host||host.startsWith("-"))return out("usage: ping -c 4 <host>","err");
-    if(!ALLOWED.includes(host))return ruleBlock(host);
-    out("PING "+host+": 64 bytes time=0.03 ms\n64 bytes from "+host+": icmp_seq=1 ttl=64 time=0.04 ms\n4 packets transmitted, 4 received, 0% loss","fg");
-    teach("<span class='cy'>ping</span> asks 'are you there?' and times the reply. <span class='cy'>-c 4</span> = try 4 times.");
-    if(host==="localhost"||host==="127.0.0.1")setFlag("ping");
-  },
-  nmap(a){
-    const sv=a.includes("-sV");let port=null;const pi=a.indexOf("-p");if(pi>-1&&a[pi+1])port=a[pi+1];
-    const target=a.filter((x,i)=>!x.startsWith("-")&&!(pi>-1&&i===pi+1))[0];
-    if(!target)return out("usage: nmap [-sV] [-p N] <host>","err");
-    if(!ALLOWED.includes(target))return ruleBlock(target);
-    out("Starting Nmap — scanning "+target+" ...","muted");
-    let ports=[];
-    if(target==="scanme.nmap.org")ports=SCAN["scanme.nmap.org"].slice();
-    if((target==="localhost"||target==="127.0.0.1")&&S.openPort)ports.push({n:S.openPort,svc:"http",ver:"SimpleHTTP/0.6 Python/3.11"});
-    if(port)ports=ports.filter(p=>String(p.n)===String(port));
-    if(!ports.length)out("  All scanned ports are closed. (No open doors right now.)","muted");
-    else{out("  PORT     STATE SERVICE"+(sv?"   VERSION":""),"muted");ports.forEach(p=>out("  <span class='ok'>"+(p.n+"/tcp").padEnd(8," ")+"</span> open  "+p.svc.padEnd(8," ")+(sv?p.ver:""),"fg"));}
-    out("Nmap done.","muted");
-    teach("<span class='cy'>nmap</span> checks which ports (doors) are open. <span class='cy'>-sV</span> names the software+version; <span class='cy'>-p N</span> scans one port.");
-    if(target==="localhost"||target==="127.0.0.1"){if(port&&S.openPort&&String(port)===String(S.openPort))setFlag("findport");else if(!port)setFlag("scanlocal");}
-    if(target==="scanme.nmap.org"){setFlag("scanme");if(sv)setFlag("sver");}
-  },
-  curl(a){
-    let t=(a.find(x=>!x.startsWith("-"))||"").replace(/^https?:\/\//,"").split("/")[0].split(":")[0];
-    if(!t)return out("usage: curl <url>","err");
-    if(t in WEB){out(esc(WEB[t]),"fg");teach("<span class='cy'>curl</span> fetches raw HTTP. Read the page <i>source</i> — secrets hide in HTML comments and headers.");}
-    else if((t==="localhost"||t==="127.0.0.1")&&S.openPort)out("<pre>Directory listing for /</pre>\n- welcome.txt\n- base/","fg");
-    else if(ALLOWED.includes(t)||t==="localhost")out("curl: (7) Failed to connect to "+t+": Connection refused","err");
-    else return ruleBlock(t);
-  },
-  base64(a,raw){
-    const dec=a.includes("-d");
-    const m=raw.match(/base64\s+(?:-d\s+)?["']?([^"']+?)["']?\s*$/);
-    if(!m)return out('usage: base64 "text"   |   base64 -d "encoded"',"err");
-    const txt=m[1];
-    out(dec?esc(fromB64(txt)):esc(toB64(txt)),"fg");
-    teach("<span class='cy'>base64</span> turns text into safe transport characters (and back with <span class='cy'>-d</span>). It's encoding, not encryption — anyone can reverse it.");
-    if(dec&&fromB64(txt).toUpperCase().includes("SHUTDOWN"))setFlag("token");
-  },
-  sha256sum(a){
-    const f=a[0];if(!f)return out("usage: sha256sum <file>","err");
-    const n=node(resolve(f));if(n===undefined)return out("sha256sum: "+f+": No such file","err");
-    const data=typeof n==="object"?JSON.stringify(Object.keys(n)):n;
-    out(pseudoHash(data)+"  "+f,"fg");
-    teach("<span class='cy'>sha256sum</span> makes a fixed-length <b>fingerprint</b> of a file. Change one byte and it changes completely — that's how you prove a file wasn't tampered with. (Hash simulated here.)");
-  },
-  dig(a){
-    const host=a.find(x=>!x.startsWith("-"))||"";if(!host)return out("usage: dig <hostname>","err");
-    const ip=DNS[host];
-    if(ip){out(";; ANSWER SECTION:","muted");out(host+".   300  IN  A  <span class='cy'>"+ip+"</span>","fg");teach("<span class='cy'>dig</span> asks DNS to turn a <b>name</b> into an <b>IP address</b> — the internet's phone book. Names are easy to remember; computers route by numbers.");if(host==="null-c2.darknet")setFlag("dig");}
-    else out(";; NXDOMAIN — no such name","muted");
-  },
+  save(){try{localStorage.setItem(SAVEKEY,snapshot());out("✔ Progress saved to this browser. Next time, type <span class='cy'>restore</span>.","ok");}catch(e){out("Couldn't save — this browser blocks storage when the page is opened as a local file. Host it (GitHub Pages / your server) and saving will work.","err");}},
+  restore(){try{const raw=localStorage.getItem(SAVEKEY);if(!raw)return out("No saved progress found yet. Play a bit, then <span class='cy'>save</span>.","warn");applySnapshot(JSON.parse(raw));out("✔ Progress restored.","ok");CMDS.sitrep();out("Resume with <span class='cy'>mission "+(S.mi+1)+"</span> or <span class='cy'>objective</span>.","muted");}catch(e){out("Couldn't restore — the save looks unreadable.","err");}},
+  load(){CMDS.restore();},
+  restart(a){if((a[0]||"")!=="confirm")return out("This wipes ALL progress and starts from Mission 1. Type <span class='cy'>restart confirm</span> to proceed.","warn");try{localStorage.removeItem(SAVEKEY);}catch(e){}resetState();out("✔ Progress wiped. Fresh start.","ok");startMission(0);},
+  whoami(){out("kali");teach("<span class='cy'>whoami</span> prints your username.");setFlag("whoami");},
+  pwd(){out("/"+CWD.join("/"));teach("<span class='cy'>pwd</span> = 'where am I?'");setFlag("pwd");},
+  ls(a){const all=a.some(x=>/^-/.test(x)&&x.includes("a")),long=a.some(x=>/^-/.test(x)&&x.includes("l"));const t=a.filter(x=>!x.startsWith("-"))[0];const n=t?node(resolve(t)):node(CWD);if(n===undefined)return out("ls: cannot access '"+(t||"")+"': No such file or directory","err");if(typeof n==="string")return out(t);let names=Object.keys(n).filter(k=>all||!k.startsWith("."));if(!names.length)return out("(empty)","muted");if(long)names.forEach(k=>{const d=typeof n[k]==="object";out((d?"drwxr-xr-x":"-rw-r--r--")+"  kali  "+(d?"4096":String(40+k.length*6)).padStart(5," ")+"  "+(d?("<span class='cy'>"+k+"</span>"):(k.startsWith(".")?("<span class='mag'>"+k+"</span>"):k)));});else out(names.map(k=>typeof n[k]==="object"?("<span class='cy'>"+k+"</span>"):(k.startsWith(".")?("<span class='mag'>"+k+"</span>"):k)).join("   "));if(all)teach("<span class='cy'>ls -la</span> reveals <b>hidden</b> files (starting with a dot) plus size and permissions.");},
+  cd(a){const t=a[0]||"~",p=resolve(t),n=node(p);if(n===undefined)return out("cd: "+t+": No such file or directory","err");if(typeof n==="string")return out("cd: "+t+": Not a directory","err");CWD=p;if(a[0]==="base")setFlag("cdbase");},
+  cat(a){const f=a[0];if(!f)return out("usage: cat <file>","err");const p=resolve(f),n=node(p);if(n===undefined)return out("cat: "+f+": No such file or directory","err");if(typeof n==="object")return out("cat: "+f+": Is a directory","err");out(esc(n),"fg");const base=p[p.length-1];if(p.slice(0,-1).join("/")==="home/kali/cases/jamie"&&base.startsWith("post")){S.postsRead.add(base);if(S.postsRead.size>=3)setFlag("readposts");}if(base==="flag.txt")setFlag("readflag");if(base.endsWith(".jpg"))teach("A .jpg is binary — read its hidden data with <span class='cy'>exiftool "+base+"</span>.");},
+  mkdir(a){const name=a[0];if(!name)return out("usage: mkdir <name>","err");const parent=node(CWD);if(name in parent)return out("mkdir: cannot create directory '"+name+"': File exists","err");parent[name]={};teach("<span class='cy'>mkdir</span> makes a new folder.");if(name==="base")setFlag("mkbase");},
+  echo(a,raw){const m=raw.match(/^echo\s+(.*?)\s*>\s*(\S+)\s*$/);if(m){const text=m[1].replace(/^["']|["']$/g,""),file=m[2],parent=node(CWD);parent[file]=text;teach("<span class='cy'>echo TEXT &gt; file</span> writes TEXT to a file.");if(file==="flag.txt")setFlag("writeflag");return;}out(a.join(" "));},
+  find(a){const ni=a.indexOf("-name");let pat=ni>-1?a[ni+1].replace(/^["']|["']$/g,""):"*";const re=new RegExp("^"+pat.replace(/[.+^${}()|[\]\\]/g,"\\$&").replace(/\*/g,".*")+"$","i");const sa=a[0]&&!a[0].startsWith("-")?a[0]:".";const base=node(resolve(sa));if(base===undefined||typeof base!=="object")return out("find: '"+sa+"': No such directory","err");const res=[];(function w(n,path){for(const k of Object.keys(n)){const cp=path+"/"+k;if(re.test(k))res.push(cp);if(typeof n[k]==="object")w(n[k],cp);}})(base,sa==="."?".":sa);out(res.length?res.join("\n"):"(no matches)","fg");teach("<span class='cy'>find</span> walks folders for files by name, with wildcards.");},
+  grep(a,raw){const m=raw.match(/grep\s+(?:-\w+\s+)*["']?([^"']+?)["']?\s+(\S+)\s*$/);if(!m)return out('usage: grep PATTERN FILE   (or: <cmd> | grep PATTERN)',"err");const pat=m[1],file=m[2],n=node(resolve(file));if(n===undefined)return out("grep: "+file+": No such file or directory","err");if(typeof n==="object")return out("grep: "+file+": Is a directory","err");const hits=n.split("\n").filter(l=>l.toLowerCase().includes(pat.toLowerCase()));out(hits.length?hits.map(esc).join("\n"):"(no match)",hits.length?"fg":"muted");teach("<span class='cy'>grep</span> prints only matching lines.");if(/token/i.test(pat)&&file.includes("intercept"))out("Now decode it: <span class='cy'>base64 -d \"U0hVVERPV04=\"</span>","muted");},
+  strings(a){const f=a[0];if(!f)return out("usage: strings <file>","err");const n=node(resolve(f));if(n===undefined)return out("strings: '"+f+"': No such file","err");if(typeof n==="object")return out("strings: Is a directory","err");out(n.split(/[^\x20-\x7e]+/).filter(s=>s.length>=4).map(esc).join("\n"),"fg");teach("<span class='cy'>strings</span> pulls readable text out of a binary — malware often leaks its server address this way.");},
+  figlet(a){out("<div class='banner'>"+esc(banner((a.join(" ")||"HELLO").toUpperCase().slice(0,14)))+"</div>");teach("<span class='cy'>figlet</span> draws big ASCII-art text.");setFlag("figlet");},
+  ip(){out("1: lo: inet 127.0.0.1/8","fg");out("2: eth0: inet <span class='cy'>10.0.2.15</span>/24  (your lab address)","fg");teach("<span class='cy'>ip a</span> lists your network addresses. <span class='cy'>lo</span> is localhost (yourself).");setFlag("ipa");},
+  iwconfig(){out("wlan0  IEEE 802.11  ESSID:off/any  Mode:Managed","fg");teach("<span class='cy'>iwconfig</span> shows wireless interfaces — here, wlan0.");},
+  ping(a){const host=a.length?a[a.length-1]:"";if(!host||host.startsWith("-"))return out("usage: ping -c 4 <host>","err");if(!isAllowed(host))return ruleBlock(host);out("PING "+host+": 64 bytes time=0.03 ms\n4 packets transmitted, 4 received, 0% loss","fg");teach("<span class='cy'>ping</span> asks 'are you there?' and times the reply.");if(host==="localhost"||host==="127.0.0.1")setFlag("ping");},
+  nmap(a){const sv=a.includes("-sV");let port=null;const pi=a.indexOf("-p");if(pi>-1&&a[pi+1])port=a[pi+1];const target=a.filter((x,i)=>!x.startsWith("-")&&!(pi>-1&&i===pi+1))[0];if(!target)return out("usage: nmap [-sV] [-p N] <host>","err");if(!isAllowed(target))return ruleBlock(target);const ip=DNS[cleanHost(target)]||cleanHost(target);out("Starting Nmap — scanning "+target+" ...","muted");let ports=(SCAN[target]||SCAN[ip]||[]).slice();if((target==="localhost"||target==="127.0.0.1")&&S.openPort)ports.push({n:S.openPort,svc:"http",ver:"SimpleHTTP/0.6 Python/3.11"});if(port)ports=ports.filter(p=>String(p.n)===String(port));if(!ports.length)out("  All scanned ports are closed.","muted");else{out("  PORT     STATE SERVICE"+(sv?"   VERSION":""),"muted");ports.forEach(p=>out("  <span class='ok'>"+(p.n+"/tcp").padEnd(8," ")+"</span> open  "+p.svc.padEnd(8," ")+(sv?p.ver:""),"fg"));}out("Nmap done.","muted");teach("<span class='cy'>nmap</span> finds open ports; <span class='cy'>-sV</span> adds software versions; <span class='cy'>-p N</span> scans one port.");if(target==="localhost"||target==="127.0.0.1"){if(port&&S.openPort&&String(port)===String(S.openPort))setFlag("findport");else if(!port)setFlag("scanlocal");}if(target==="scanme.nmap.org"){setFlag("scanme");if(sv)setFlag("sver");}if((target==="10.0.2.6"||target==="null-relay.lab")&&sv)setFlag("ex_scan");},
+  curl(a){let t=cleanHost(a.find(x=>!x.startsWith("-"))||"");const full=(a.find(x=>!x.startsWith("-"))||"").replace(/^https?:\/\//,"");const key=Object.keys(WEB).find(k=>k.replace(/^https?:\/\//,"")===full);if(!t)return out("usage: curl <url>","err");if(key){out(esc(WEB[key]),"fg");teach("<span class='cy'>curl</span> fetches raw HTTP. Read the source — secrets hide in comments and backups.");if(/users\.sql$/.test(full)){out("Admin hash saved to <span class='cy'>~/hash.txt</span> for cracking.","muted");setFlag("web_loot");}}else if((t==="localhost")&&S.openPort)out("Directory listing for /\n- welcome.txt","fg");else if(isAllowed(t))out("curl: (7) Failed to connect to "+t,"err");else return ruleBlock(t);},
+  whois(a){const h=cleanHost(a[0]||"");if(!h)return out("usage: whois <domain>","err");out("Domain: "+h+"\nRegistrar: LabReg Inc.\nCreated: 2024-01-05\nName Server: ns1."+h+"\nAdmin: redacted (practice target)","fg");teach("<span class='cy'>whois</span> looks up who registered a domain — handy recon on real engagements.");if(h==="vuln-shop.lab")setFlag("web_fp");},
+  whatweb(a){const h=cleanHost(a[0]||"");if(!h)return out("usage: whatweb <host>","err");if(!isAllowed(h))return ruleBlock(h);out(h+" [200 OK] nginx/1.18.0, PHP/7.2.1, HTTPServer, Country[LAB], Title[Vuln-Shop (practice)]","fg");teach("<span class='cy'>whatweb</span> fingerprints a website — server, language, frameworks. Old versions = known weaknesses.");setFlag("web_fp");},
+  nikto(a){const hi=a.indexOf("-h");const h=cleanHost(hi>-1?a[hi+1]:a.find(x=>!x.startsWith("-")));if(!h)return out("usage: nikto -h <host>","err");if(!isAllowed(h))return ruleBlock(h);out("- Nikto v2.5 scanning "+h+" ...","muted");["Server: nginx/1.18.0 (outdated)","/admin/: Admin login page found","/backup/: Directory indexing found — possible data leak","/robots.txt: contains 3 Disallow entries (/admin /backup /uploads)","No anti-clickjacking X-Frame-Options header"].forEach(l=>out("  + "+l,"fg"));teach("<span class='cy'>nikto</span> scans a web server for known issues: old software, exposed folders, missing headers. Loud but fast.");setFlag("web_nikto");},
+  gobuster(a,raw){const h=cleanHost((raw.match(/-u\s+(\S+)/)||[])[1]||"");if(!h)return out("usage: gobuster dir -u http://HOST -w WORDLIST","err");if(!isAllowed(h))return ruleBlock(h);out("Gobuster — brute-forcing directories on "+h,"muted");["/admin                (Status: 200)","/login                (Status: 200)","/backup               (Status: 200)","/uploads              (Status: 301)"].forEach(l=>out("  "+l,"fg"));teach("<span class='cy'>gobuster</span> guesses hidden folders/files from a wordlist — finds pages with no link to them. /backup looks juicy.");setFlag("web_dirs");},
+  dirb(a){CMDS.gobuster(["dir","-u",a[1]||"http://10.0.2.20"],"gobuster dir -u "+(a[1]||"http://10.0.2.20"));},
+  hashid(a){const h=a.find(x=>!x.startsWith("-"))||"";if(!h)return out("usage: hashid <hash>","err");const kind=h.length===32?"MD5":h.length===40?"SHA-1":h.length===64?"SHA-256":"Unknown";out("Analyzing '"+h+"'\n[+] "+kind+(kind==="MD5"?"  [+] NTLM":""),"fg");teach("<span class='cy'>hashid</span> guesses a hash's type from its length/shape. 32 hex chars = MD5 — fast and weak.");if(kind==="MD5")setFlag("pw_id");},
+  "hash-identifier"(a){CMDS.hashid(a);},
+  john(a){const f=a.find(x=>!x.startsWith("-"))||"";const n=node(resolve(f||"~/hash.txt"));const hash=typeof n==="string"?n.trim():"5f4dcc3b5aa765d61d8327deb882cf99";out("Loaded 1 password hash (raw-MD5)","muted");if(hash==="5f4dcc3b5aa765d61d8327deb882cf99"){out("<span class='ok'>password</span>        (admin)","fg");out("1 password cracked.","ok");teach("<span class='cy'>john</span> (John the Ripper) cracks hashes offline by hashing guesses and comparing. 'password' as plain MD5 falls instantly.");setFlag("pw_crack");}else out("No password cracked.","muted");},
+  hashcat(a){out("hashcat (mode 0 = MD5) ...","muted");out("5f4dcc3b5aa765d61d8327deb882cf99:<span class='ok'>password</span>","fg");out("Status: Cracked","ok");teach("<span class='cy'>hashcat</span> is the GPU-accelerated cracker — same idea as john, far faster. <span class='cy'>-m 0</span> selects MD5.");setFlag("pw_crack");},
+  hydra(a){const tgt=a.find(x=>/^(\d{1,3}\.){3}\d{1,3}$/.test(x)||x.endsWith(".lab"))||"";if(!tgt)return out("usage: hydra -l <user> -P <wordlist> <host> http-get /path","err");if(!isAllowed(tgt))return ruleBlock(tgt);out("Hydra starting — target "+tgt,"muted");out("[80][http-get] host: "+tgt+"   login: admin   password: <span class='ok'>password</span>","fg");out("1 valid password found.","ok");teach("<span class='cy'>hydra</span> brute-forces a LIVE login (online). Slower and noisier than offline cracking — and only ever on systems you're allowed to test.");setFlag("pw_hydra");},
+  "airmon-ng"(a){if((a[0]||"")==="start"){S.wifi.mon=true;out("Found 2 processes that could cause trouble.\nPHY  Interface  Driver\nphy0 wlan0      ath9k","muted");out("(monitor mode vif enabled for wlan0 on <span class='cy'>wlan0mon</span>)","fg");teach("<span class='cy'>airmon-ng start wlan0</span> puts your Wi-Fi card into <b>monitor mode</b> — able to hear ALL nearby Wi-Fi, not just your own traffic.");setFlag("w_mon");}else out("usage: airmon-ng start wlan0","err");},
+  "airodump-ng"(a,raw){if(!S.wifi.mon)return out("airodump-ng: put the card in monitor mode first (airmon-ng start wlan0).","err");const bss=(raw.match(/--bssid\s+(\S+)/)||[])[1];if(bss){if(bss.toUpperCase()!==AP.bssid)return apBlock();S.wifi.capturing=true;out("CH  6 ][ Elapsed: 12 s ][ capturing to capture-01.cap","muted");out("BSSID              PWR  ENC   ESSID","muted");out("  "+AP.bssid+"  -41  WPA2  "+AP.essid,"fg");out("STATION            waiting for a client to produce a handshake...","muted");teach("Locking onto one BSSID+channel and writing to a file means you only capture OUR access point's traffic — and wait for the 4-way handshake.");}else{out("CH   ][ Elapsed ][ scanning all channels","muted");out("BSSID              CH  ENC   ESSID","muted");out("  <span class='ok'>"+AP.bssid+"</span>   "+AP.ch+"  WPA2  "+AP.essid+"   <span class='muted'>(ours)</span>","fg");NEIGHBORS.forEach(n=>out("  "+n.bssid+"   "+n.ch+"  WPA2  "+n.essid+"   <span class='err'>(NOT ours — off-limits)</span>","fg"));teach("<span class='cy'>airodump-ng</span> lists every access point and its BSSID (its MAC address) and channel. We only touch <b>"+AP.essid+"</b> — Rule #1.");setFlag("w_scan");}},
+  "aireplay-ng"(a,raw){if(!S.wifi.capturing)return out("aireplay-ng: start capturing the target first (airodump-ng --bssid ... -w capture).","err");const bss=(raw.match(/-a\s+(\S+)/)||[])[1];if(bss&&bss.toUpperCase()!==AP.bssid)return apBlock();out("Sending 5 deauth frames to "+AP.bssid+" ...","muted");out("<span class='ok'>>> WPA handshake: "+AP.bssid+" captured! <<</span>","fg");teach("<span class='cy'>aireplay-ng --deauth</span> briefly knocks a device off the Wi-Fi. When it reconnects, it redoes the 4-way handshake — which we capture. (On your own network only.)");node(HOME)["capture-01.cap"]="WPA2 4-way handshake for "+AP.essid;setFlag("w_cap");},
+  "aircrack-ng"(a){const file=a.find(x=>x.endsWith(".cap"))||"";if(!node(resolve(file||"~/capture-01.cap"))&&!S.flags.w_cap)return out("aircrack-ng: no valid handshake found. Capture one first.","err");out("Reading packets... 1 handshake found for "+AP.essid,"muted");out("Testing passphrases from rockyou.txt ...","muted");out("<span class='flag'>KEY FOUND! [ "+AP.key+" ]</span>","fg");teach("<span class='cy'>aircrack-ng</span> tries each word from the list against the captured handshake — offline. '"+AP.key+"' is short, so it falls fast. A 20+ char random passphrase would make this hopeless.");setFlag("w_crack");},
+  wifite(){out("wifite: automated wireless auditor — it runs airmon/airodump/aireplay/aircrack for you.","fg");out("(In this lab, do the steps by hand so you learn each one.)","muted");teach("<span class='cy'>wifite</span> automates the whole aircrack-ng workflow into one command. Great once you understand the manual steps.");},
+  netdiscover(){out("Currently scanning 10.0.2.0/24 ...","muted");out(" IP            MAC                Vendor","muted");[["10.0.2.1","52:54:00:12:35:00","Router"],["10.0.2.6","08:00:27:aa:bb:06","(null-relay)"],["10.0.2.15","08:00:27:aa:bb:15","(you)"],["10.0.2.20","08:00:27:aa:bb:20","(vuln-shop)"]].forEach(r=>out("  "+r[0].padEnd(13," ")+r[1]+"  "+r[2],"fg"));teach("<span class='cy'>netdiscover</span> finds every device on the local network by their IP+MAC — a quick map of who's around.");setFlag("sn_disc");},
+  tcpdump(a){out("tcpdump: listening on eth0 ...","muted");["IP 10.0.2.15 > 10.0.2.20: HTTP GET /login","IP 10.0.2.20 > 10.0.2.15: HTTP 200 OK","<span class='err'>IP 10.0.2.15 > 10.0.2.20: POST /login  user=guest&pass=hunter2   (plain HTTP!)</span>"].forEach(l=>out("  "+l,"fg"));out("3 packets captured. (Ctrl+C to stop)","muted");teach("<span class='cy'>tcpdump</span> shows live packets. That login was plain <b>HTTP</b>, so the password 'hunter2' travelled in the clear — anyone sniffing can read it.");setFlag("sn_cap");},
+  wireshark(){out("Wireshark is the graphical packet analyser. Here's the key capture, decoded:","muted");out("  Follow HTTP stream: POST /login  user=guest  pass=hunter2","fg");teach("<span class='cy'>wireshark</span> lets you click through captured packets and 'follow a stream' to rebuild a whole conversation. Same data as tcpdump, easier to read.");},
+  tshark(){CMDS.wireshark();},
+  searchsploit(a){const q=a.join(" ").toLowerCase();if(q.includes("vsftpd")){out(" Exploit Title                                        Path","muted");out("  vsftpd 2.3.4 - Backdoor Command Execution           unix/remote/17491.rb","fg");out("  vsftpd 2.3.4 - Backdoor Command Execution (MSF)     unix/remote/vsftpd_234.rb","fg");teach("<span class='cy'>searchsploit</span> searches the offline Exploit-DB for known weaknesses in a specific software version. vsftpd 2.3.4 has a famous backdoor.");setFlag("ex_search");}else out("Exploits: No Results   (try: searchsploit vsftpd 2.3.4)","muted");},
+  msfconsole(){out("<div class='banner'>"+esc(banner("MSF"))+"</div>","err");out("       =[ metasploit v6.4  · 2300+ exploits ]","muted");out("Type <span class='cy'>search vsftpd</span> to begin, or <span class='cy'>exit</span> to leave.","muted");S.mode="msf";S.msf.module=null;refresh();teach("<span class='cy'>msfconsole</span> opens Metasploit — a framework of ready-made exploits. The prompt changes to <b>msf6 &gt;</b>. Workflow: search → use → set → exploit.");},
+  nc(a){const host=a.find(x=>/^(\d{1,3}\.){3}\d{1,3}$/.test(x)||x.endsWith(".lab"))||"";if(!host)return out("usage: nc <host> <port>","err");if(!isAllowed(host))return ruleBlock(host);out("Connected to "+host+".\n220 (service banner)","fg");teach("<span class='cy'>nc</span> (netcat) is the 'network swiss army knife' — connect to any port by hand to read banners, test services, or move data.");},
+  netcat(a){CMDS.nc(a);},
+  binwalk(a){out("DECIMAL   HEXADECIMAL   DESCRIPTION\n0         0x0           ELF 64-bit executable\n512       0x200         Zlib compressed data","fg");teach("<span class='cy'>binwalk</span> finds files hidden inside other files — common in firmware and forensics challenges.");},
+  sha256sum(a){const f=a[0];if(!f)return out("usage: sha256sum <file>","err");const n=node(resolve(f));if(n===undefined)return out("sha256sum: "+f+": No such file","err");out(pseudoHash(typeof n==="object"?JSON.stringify(Object.keys(n)):n)+"  "+f,"fg");teach("<span class='cy'>sha256sum</span> makes a fixed-length <b>fingerprint</b>; change one byte and it changes completely — proof a file wasn't tampered with. (Simulated here.)");},
+  dig(a){const host=cleanHost(a.find(x=>!x.startsWith("-"))||"");if(!host)return out("usage: dig <hostname>","err");const ip=DNS[host];if(ip){out(";; ANSWER SECTION:","muted");out(host+".  300  IN  A  <span class='cy'>"+ip+"</span>","fg");teach("<span class='cy'>dig</span> asks DNS to turn a <b>name</b> into an <b>IP</b> — the internet's phone book.");if(host==="null-c2.darknet")setFlag("dig");}else out(";; NXDOMAIN — no such name","muted");},
   nslookup(a){CMDS.dig(a);},
-  netstat(){
-    out("Proto  Local Address        Foreign Address          State","muted");
-    out("tcp    10.0.2.15:49512      <span class='mag'>66.66.6.6:6666</span>         ESTABLISHED  nulld","fg");
-    out("tcp    127.0.0.1:631        0.0.0.0:*                LISTEN       cupsd","fg");
-    if(S.openPort)out("tcp    0.0.0.0:"+S.openPort+"          0.0.0.0:*                LISTEN       python3","fg");
-    teach("<span class='cy'>netstat</span> lists network connections. That ESTABLISHED line to <span class='mag'>66.66.6.6:6666</span> is one you never made — NULL's backdoor phoning home.");
-    setFlag("netstat");
-  },
+  netstat(){out("Proto Local Address      Foreign Address        State","muted");out("tcp   10.0.2.15:49512    <span class='mag'>66.66.6.6:6666</span>       ESTABLISHED  nulld","fg");out("tcp   127.0.0.1:631      0.0.0.0:*              LISTEN       cupsd","fg");if(S.openPort)out("tcp   0.0.0.0:"+S.openPort+"        0.0.0.0:*              LISTEN       python3","fg");teach("<span class='cy'>netstat</span> lists network connections. That ESTABLISHED line to <span class='mag'>66.66.6.6:6666</span> is NULL's backdoor phoning home.");setFlag("netstat");},
   ss(){CMDS.netstat();},
-  traceroute(a){
-    const host=a.find(x=>!x.startsWith("-"))||"";if(!host)return out("usage: traceroute <host>","err");
-    if(!ALLOWED.includes(host)&&!DNS[host])return ruleBlock(host);
-    out("traceroute to "+host+" ("+(DNS[host]||"?")+"), 30 hops max","muted");
-    ["10.0.2.1  home router  1.2 ms","192.0.2.1  ISP gateway  9.8 ms","198.51.100.9  backbone  22 ms","66.66.6.1  darknet edge  41 ms","<span class='mag'>66.66.6.6  null-c2.darknet  44 ms</span>"].forEach((h,i)=>out("  "+(i+1)+"  "+h,"fg"));
-    teach("<span class='cy'>traceroute</span> shows every <b>hop</b> (router) a packet crosses to reach a host — you can literally watch the path to NULL's node.");
-    if(host==="null-c2.darknet")setFlag("trace");
-  },
-  ps(a){
-    out("USER   PID    COMMAND","muted");
-    out("kali   1021   /usr/bin/bash","fg");
-    out("kali   1140   python3 -m http.server"+(S.openPort?"":" (not running)"),"fg");
-    out("root   <span class='mag'>31337</span>  <span class='mag'>nulld --spread --c2 null-c2.darknet</span>","fg");
-    teach("<span class='cy'>ps</span> lists running <b>processes</b>. Each has a PID (process ID). There it is — <span class='mag'>nulld</span>, PID <span class='mag'>31337</span>. That's the one to stop.");
-    setFlag("ps");
-  },
-  arm(){
-    if(M().id!==8)return out("Nothing to arm here. (The shutdown is armed in Mission 8.)","muted");
-    const cw=codewords();
-    if(cw.length<4){out("⚠ Shutdown shielded. You need at least 4 codewords; you have "+cw.length+".","err");out("Go crack more ciphers in <span class='cy'>mission 5</span>, then come back.","warn");return;}
-    S.armed=true;setFlag("arm");
-    out("Shutdown ARMED with codewords: <span class='ok'>"+cw.join(", ")+"</span>","ok");
-    nullSay("you armed it? then i take your weapons. [disabled: kill, nmap, decode]");
-    ["kill","nmap","decode"].forEach(lockCmd);
-    out("Restore everything with <span class='cy'>sudo repair all</span>, then <span class='cy'>sudo kill 31337</span>.","warn");
-  },
-  kill(a,raw,sudo){
-    if(!sudo)return out("kill: permission denied — try <span class='cy'>sudo kill <PID></span>","err");
-    const pid=a.find(x=>/^\d+$/.test(x));
-    if(!pid)return out("usage: sudo kill <PID>","err");
-    if(pid!=="31337")return out("kill: ("+pid+") - No such process","err");
-    if(M().id!==8){out("Nothing to kill here.","muted");return;}
-    if(!S.armed)return out("NULL's process is shielded. <span class='cy'>arm</span> the shutdown first.","err");
-    setFlag("kill");
-  },
-  sudo(a,raw){
-    if(a[0]==="repair"){
-      const what=a[1];
-      if(what==="all"){const locked=Object.keys(S.null.locked).filter(k=>S.null.locked[k]);S.null.locked={};out(locked.length?("Restored: <span class='ok'>"+locked.join(", ")+"</span>."):"Nothing was disabled.","ok");return;}
-      if(what&&S.null.locked[what]){delete S.null.locked[what];out("Restored <span class='ok'>"+what+"</span>.","ok");return;}
-      return out("usage: sudo repair <cmd|all>","err");
-    }
-    const cmd=(a[0]||"").toLowerCase();
-    if(!cmd)return out("usage: sudo <command>","err");
-    if(S.null.locked[cmd])return out("⚠ NULL disabled <span class='err'>"+cmd+"</span> — even root can't run it yet. Restore it: <span class='cy'>sudo repair all</span>.","warn");
-    if(!CMDS[cmd])return out("sudo: "+cmd+": command not found","err");
-    teach("<span class='cy'>sudo</span> means 'do this as the administrator (root)'. Big power — used only when a task truly needs it.");
-    CMDS[cmd](a.slice(1),raw.replace(/^sudo\s+/,""),true);
-  },
-  uname(){out("Linux kali 6.8.0-kali #1 SMP x86_64 GNU/Linux","fg");teach("<span class='cy'>uname -a</span> shows the operating system and kernel version — the first thing you note about any machine.");},
+  traceroute(a){const host=cleanHost(a.find(x=>!x.startsWith("-"))||"");if(!host)return out("usage: traceroute <host>","err");if(!isAllowed(host)&&!DNS[host])return ruleBlock(host);out("traceroute to "+host+" ("+(DNS[host]||"?")+"), 30 hops max","muted");["10.0.2.1  router  1.2 ms","192.0.2.1  ISP gateway  9.8 ms","198.51.100.9  backbone  22 ms","66.66.6.1  darknet edge  41 ms","<span class='mag'>66.66.6.6  null-c2.darknet  44 ms</span>"].forEach((h,i)=>out("  "+(i+1)+"  "+h,"fg"));teach("<span class='cy'>traceroute</span> shows every router <b>hop</b> to a host — you can watch the path to NULL's node.");if(host==="null-c2.darknet")setFlag("trace");},
+  ps(a){out("USER   PID    COMMAND","muted");out("kali   1021   /usr/bin/bash","fg");out("kali   1140   python3 -m http.server"+(S.openPort?"":" (idle)"),"fg");out("root   <span class='mag'>31337</span>  <span class='mag'>nulld --spread --c2 null-c2.darknet</span>","fg");teach("<span class='cy'>ps</span> lists running <b>processes</b> and their PIDs. There it is — <span class='mag'>nulld</span>, PID <span class='mag'>31337</span>.");setFlag("ps");},
+  arm(){if(M().id!==13)return out("The shutdown is armed in Mission 13.","muted");const cw=codewords();if(cw.length<4){out("⚠ Shutdown shielded. You need 4+ codewords; you have "+cw.length+".","err");out("Crack more ciphers in <span class='cy'>mission 5</span>, then return.","warn");return;}S.armed=true;setFlag("arm");out("Shutdown ARMED with: <span class='ok'>"+cw.join(", ")+"</span>","ok");nullSay("you armed it? then i take your weapons. [disabled: kill, nmap, decode]");["kill","nmap","decode"].forEach(lockCmd);out("Restore with <span class='cy'>sudo repair all</span>, then <span class='cy'>sudo kill 31337</span>.","warn");},
+  kill(a,raw,sudo){if(!sudo)return out("kill: permission denied — try <span class='cy'>sudo kill <PID></span>","err");const pid=a.find(x=>/^\d+$/.test(x));if(!pid)return out("usage: sudo kill <PID>","err");if(pid!=="31337")return out("kill: ("+pid+") - No such process","err");if(M().id!==13)return out("Nothing to kill here.","muted");if(!S.armed)return out("NULL's process is shielded. <span class='cy'>arm</span> the shutdown first.","err");setFlag("kill");},
+  sudo(a,raw){if(a[0]==="repair"){const what=a[1];if(what==="all"){const L=Object.keys(S.null.locked).filter(k=>S.null.locked[k]);S.null.locked={};out(L.length?("Restored: <span class='ok'>"+L.join(", ")+"</span>."):"Nothing was disabled.","ok");return;}if(what&&S.null.locked[what]){delete S.null.locked[what];out("Restored <span class='ok'>"+what+"</span>.","ok");return;}return out("usage: sudo repair <cmd|all>","err");}const cmd=(a[0]||"").toLowerCase();if(!cmd)return out("usage: sudo <command>","err");if(S.null.locked[cmd])return out("⚠ NULL disabled <span class='err'>"+cmd+"</span> — even root can't run it yet. <span class='cy'>sudo repair all</span>.","warn");if(!CMDS[cmd])return out("sudo: "+cmd+": command not found","err");teach("<span class='cy'>sudo</span> = 'do this as administrator (root)'. Big power — used only when needed.");CMDS[cmd](a.slice(1),raw.replace(/^sudo\s+/,""),true);},
+  uname(){out("Linux kali 6.8.0-kali #1 SMP x86_64 GNU/Linux","fg");teach("<span class='cy'>uname -a</span> shows the OS and kernel version.");},
   date(){out(new Date().toString(),"fg");},
-  history(){if(!S.history.length)return out("(no history yet)","muted");S.history.forEach((h,i)=>out("  "+(i+1)+"  "+esc(h)));teach("<span class='cy'>history</span> lists commands you've typed. On a real box, .bash_history is a goldmine — and a liability.");},
-  exiftool(a){
-    const f=a[0];if(!f)return out("usage: exiftool <file>","err");
-    if(!/bedroom\.jpg$/.test(f)){const n=node(resolve(f));if(n===undefined)return out("exiftool: file not found: "+f,"err");return out("No GPS or location tags found in "+f+".","muted");}
-    out("Camera Model Name   : Pixel 7","fg");out("Date/Time Original  : 2026:10:02 17:41:08","fg");
-    out("GPS Latitude        : <span class='mag'>14 deg 33' 14.2\" N</span>","fg");out("GPS Longitude       : <span class='mag'>121 deg 01' 50.6\" E</span>","fg");
-    out("GPS Position        : <span class='mag'>14.5539, 121.0307</span>","fg");
-    teach("<span class='cy'>exiftool</span> reads hidden <b>metadata</b>. Photos often carry the exact GPS spot they were taken — that 'new view' post could point a stranger to Jamie's home.");
-    setFlag("gps");
-  },
-  zgrep(a,raw){
-    const m=raw.match(/-x\s+"([^"]+)"/)||raw.match(/-x\s+(\S+)/);
-    if(!m)return out('usage: zgrep -c -x "WORD" /usr/share/wordlists/rockyou.txt.gz',"err");
-    const w=m[1],count=leakCount(w);out(String(count),"fg");
-    if(count>0){teach("<span class='cy'>zgrep</span> searches inside a zipped file. That password is on the leaked list <b>"+count.toLocaleString()+"</b> times — attackers try these first.");setFlag("weakpw");}
-    else{teach("Zero hits! A phrase of random words isn't on any leaked list — length beats tricky symbols.");setFlag("strongpw");}
-  },
-  openssl(a,raw){
-    const m=raw.match(/rand\s+-base64\s+(\d+)/);if(!m)return out("usage: openssl rand -base64 12","err");
-    const n=Math.min(64,Math.max(1,parseInt(m[1],10)));const bytes=new Uint8Array(n);
-    (crypto.getRandomValues?crypto.getRandomValues(bytes):bytes.forEach((_,i)=>bytes[i]=Math.floor(Math.random()*256)));
-    out(btoa(String.fromCharCode.apply(null,bytes)),"fg");
-    teach("<span class='cy'>openssl rand -base64 12</span> makes a truly random password — strong, but hard to remember. That's what a password manager is for.");
-    setFlag("openssl");
-  },
-  answer(a){
-    const m=M(),key=(a[0]||"").toLowerCase(),val=a.slice(1).join(" ").toLowerCase();
-    if(m.id===1){
-      if(key==="school"){if(/riverside/.test(val)){out("Correct — 'Riverside Middle Lions' on the jersey.","ok");setFlag("school");}else out("Not quite. Re-read the jersey post.","warn");return;}
-      if(key==="pet"){if(/biscuit/.test(val)){out("Correct — Biscuit (also Jamie's password, yikes).","ok");setFlag("pet");}else out("Not quite. One post is a dog's birthday.","warn");return;}
-      if(key==="birthday"){if(/\b14\b/.test(val)||/oct/.test(val)){out("Correct — October 14.","ok");setFlag("bday");}else out("Not quite. One post names a date.","warn");return;}
-    }
-    if(m.id===3&&key==="stronger"){if(/pass/.test(val)){out("Right — the passphrase. Length beats symbols.","ok");setFlag("stronger");}else out("Think again — which is longer and harder to guess?","warn");return;}
-    out("Nothing to answer here right now. (Check <span class='cy'>objective</span>.)","muted");
-  },
-  rungs(){
-    out("THE CLIMB — decode &lt;op&gt; \"&lt;message&gt;\"","cy");
-    RUNGS.forEach(r=>{const solved=S.flags["word_"+r.n];
-      out("  "+(solved?"<span class='ok'>[✓ "+r.word+"]</span>":"<span class='muted'>[ ]</span>")+" <b>Rung "+r.n+"</b> — "+r.trick);
-      out("      <span class='muted'>"+esc(r.locked)+"</span>");});
-    out("Ends with '='? base64. Only dots/dashes? morse. 1s and 0s? binary. Boss = three layers.","muted");
-  },
-  decode(a,raw){
-    const op=(a[0]||"").toLowerCase();
-    if(!DECODE[op])return out("ops: reverse rot13 base64 binary hex morse atbash\nusage: decode base64 \"TWVldCA...\"","err");
-    let text=a.slice(1).join(" ").trim().replace(/^["']|["']$/g,"");
-    if(!text)return out("Give me something to decode, in quotes.","err");
-    const result=DECODE[op](text);out("→ "+esc(result),"mag");
-    RUNGS.forEach(r=>{
-      if(result.toUpperCase().replace(/[^A-Z0-9 ]/g,"").trim()===r.plain&&!S.flags["word_"+r.n]){
-        S.flags["word_"+r.n]=true;
-        out("  ★ Rung "+r.n+" cracked! Codeword: <span class='flag'>"+r.word+"</span>","ok");
-        const solved=codewords().length;
-        if(solved>=1)setFlag("rung1");if(solved>=3)setFlag("rung3x");if(r.n===8)setFlag("boss");
-      }});
-    teach("Analysts build a 'recipe' of steps like this in <b>CyberChef</b>. A layered message = undo one layer at a time.");
-  },
-  scenario(){
-    if(M().id!==6)return out("No scenarios in this mission. Type <span class='cy'>missions</span>.","muted");
-    if(S.scenIdx>=SCEN.length)return out("You've answered them all — nice work.","ok");
-    const sc=SCEN[S.scenIdx];out("SCENARIO "+(S.scenIdx+1)+"/"+SCEN.length+": "+sc.q,"warn");out("Answer: <span class='cy'>safe</span> or <span class='cy'>risky</span>","muted");
-  },
-  safe(){answerScenario("safe");},
-  risky(){answerScenario("risky");},
-  man(a){
-    const t=(a[0]||"").toLowerCase();
-    const MAN={whoami:"whoami — print the current username.",pwd:"pwd — where you are.",ls:"ls — list files. -la shows hidden files and detail.",cd:"cd — change directory. 'cd ..' up, 'cd' home.",cat:"cat — print a file.",mkdir:"mkdir — make a folder.",echo:"echo — print text; 'echo hi > file' writes it.",find:"find PATH -name \"*.ext\" — search for files by name.",grep:"grep PATTERN FILE — print lines that match. Also used after a pipe |.",strings:"strings FILE — pull readable text out of a binary.",figlet:"figlet — big ASCII-art text.",ip:"ip a — show your network addresses.",ping:"ping — test if a host is reachable.",nmap:"nmap — find open ports/services. Only what you own or may test.",curl:"curl URL — fetch a web page's raw source.",base64:"base64 / base64 -d — encode or decode base64 (not encryption).",sha256sum:"sha256sum FILE — fixed-length fingerprint to detect tampering.",dig:"dig NAME — look up the IP for a hostname (DNS).",netstat:"netstat — list network connections.",traceroute:"traceroute HOST — show each router hop to a host.",ps:"ps — list running processes and their PIDs.",kill:"sudo kill PID — stop a process by its PID.",sudo:"sudo CMD — run a command as administrator (root).",exiftool:"exiftool FILE — read a photo's hidden metadata (incl GPS).",zgrep:"zgrep — search inside a gzip file like rockyou.txt.gz.",openssl:"openssl rand -base64 N — generate a random password.",decode:"decode OP \"text\" — one cipher step.",history:"history — list commands you've typed."};
-    if(!t)return out("usage: man <command>   e.g. man nmap","err");
-    out(MAN[t]||("No manual entry for "+t),MAN[t]?"fg":"err");
-  }
+  history(){if(!S.history.length)return out("(no history yet)","muted");S.history.forEach((h,i)=>out("  "+(i+1)+"  "+esc(h)));teach("<span class='cy'>history</span> lists commands you've typed.");},
+  exiftool(a){const f=a[0];if(!f)return out("usage: exiftool <file>","err");if(!/bedroom\.jpg$/.test(f)){const n=node(resolve(f));if(n===undefined)return out("exiftool: file not found: "+f,"err");return out("No GPS tags found in "+f+".","muted");}out("Camera Model Name   : Pixel 7","fg");out("Date/Time Original  : 2026:10:02 17:41:08","fg");out("GPS Position        : <span class='mag'>14.5539, 121.0307</span>","fg");teach("<span class='cy'>exiftool</span> reads hidden <b>metadata</b>. Photos often carry the exact GPS spot they were taken — that 'new view' post could point to Jamie's home.");setFlag("gps");},
+  zgrep(a,raw){const m=raw.match(/-x\s+"([^"]+)"/)||raw.match(/-x\s+(\S+)/);if(!m)return out('usage: zgrep -c -x "WORD" /usr/share/wordlists/rockyou.txt.gz',"err");const w=m[1],count=leakCount(w);out(String(count),"fg");if(count>0){teach("<span class='cy'>zgrep</span> searches inside a zipped file. That password is on the leaked list <b>"+count.toLocaleString()+"</b> times.");setFlag("weakpw");}else{teach("Zero hits! Random words aren't on leaked lists — length beats symbols.");setFlag("strongpw");}},
+  openssl(a,raw){const m=raw.match(/rand\s+-base64\s+(\d+)/);if(!m)return out("usage: openssl rand -base64 12","err");const n=Math.min(64,Math.max(1,parseInt(m[1],10)));const b=new Uint8Array(n);(crypto.getRandomValues?crypto.getRandomValues(b):b.forEach((_,i)=>b[i]=Math.floor(Math.random()*256)));out(btoa(String.fromCharCode.apply(null,b)),"fg");teach("<span class='cy'>openssl rand -base64 12</span> makes a truly random password — strong, but use a manager to remember it.");setFlag("openssl");},
+  answer(a){const m=M(),key=(a[0]||"").toLowerCase(),val=a.slice(1).join(" ").toLowerCase();if(m.id===1){if(key==="school"){if(/riverside/.test(val)){out("Correct — 'Riverside Middle Lions'.","ok");setFlag("school");}else out("Not quite. Re-read the jersey post.","warn");return;}if(key==="pet"){if(/biscuit/.test(val)){out("Correct — Biscuit.","ok");setFlag("pet");}else out("Not quite. One post is a dog's birthday.","warn");return;}if(key==="birthday"){if(/\b14\b/.test(val)||/oct/.test(val)){out("Correct — October 14.","ok");setFlag("bday");}else out("Not quite. One post names a date.","warn");return;}}if(m.id===3&&key==="stronger"){if(/pass/.test(val)){out("Right — the passphrase. Length beats symbols.","ok");setFlag("stronger");}else out("Think again — which is longer?","warn");return;}if(m.id===10&&(key==="protocol"||key==="safe-protocol")){if(/https/.test(val)){out("Right — HTTPS encrypts the login so a sniffer only sees scrambled bytes.","ok");setFlag("sn_lesson");}else out("Think: which protocol shows a padlock and encrypts traffic?","warn");return;}out("Nothing to answer here right now. (Check <span class='cy'>objective</span>.)","muted");},
+  rungs(){out("THE CLIMB — decode &lt;op&gt; \"&lt;message&gt;\"","cy");RUNGS.forEach(r=>{const s=S.flags["word_"+r.n];out("  "+(s?"<span class='ok'>[✓ "+r.word+"]</span>":"<span class='muted'>[ ]</span>")+" <b>Rung "+r.n+"</b> — "+r.trick);out("      <span class='muted'>"+esc(r.locked)+"</span>");});out("Ends with '='? base64. Dots/dashes? morse. 1s/0s? binary. Boss = three layers.","muted");},
+  decode(a,raw){const op=(a[0]||"").toLowerCase();if(!DECODE[op])return out("ops: reverse rot13 base64 binary hex morse atbash\nusage: decode base64 \"TWVl...\"","err");let text=a.slice(1).join(" ").trim().replace(/^["']|["']$/g,"");if(!text)return out("Give me something to decode, in quotes.","err");const result=DECODE[op](text);out("→ "+esc(result),"mag");RUNGS.forEach(r=>{if(result.toUpperCase().replace(/[^A-Z0-9 ]/g,"").trim()===r.plain&&!S.flags["word_"+r.n]){S.flags["word_"+r.n]=true;out("  ★ Rung "+r.n+" cracked! Codeword: <span class='flag'>"+r.word+"</span>","ok");const n=codewords().length;if(n>=1)setFlag("rung1");if(n>=3)setFlag("rung3x");if(r.n===8)setFlag("boss");}});teach("Analysts build a 'recipe' of steps like this in CyberChef. A layered message = undo one layer at a time.");},
+  scenario(){if(M().id!==6)return out("No scenarios in this mission.","muted");if(S.scenIdx>=SCEN.length)return out("You've answered them all.","ok");const sc=SCEN[S.scenIdx];out("SCENARIO "+(S.scenIdx+1)+"/"+SCEN.length+": "+sc.q,"warn");out("Answer: <span class='cy'>safe</span> or <span class='cy'>risky</span>","muted");},
+  safe(){answerScenario("safe");},risky(){answerScenario("risky");},
+  man(a){const t=(a[0]||"").toLowerCase();const MAN={whoami:"print your username.",pwd:"where you are.",ls:"list files; -la shows hidden + detail.",cd:"change directory.",cat:"print a file.",mkdir:"make a folder.",echo:"print text; > writes to a file.",find:"search for files by name.",grep:"print matching lines; use after | too.",strings:"readable text from a binary.",figlet:"big ASCII text.",ip:"your network addresses.",ping:"is a host reachable?",nmap:"find open ports/services.",curl:"fetch a web page's source.",whois:"who registered a domain.",whatweb:"fingerprint a website's software.",nikto:"scan a web server for known issues.",gobuster:"brute-force hidden web folders.",hashid:"identify a hash type.",john:"crack hashes offline (John the Ripper).",hashcat:"GPU hash cracker (-m 0 = MD5).",hydra:"brute-force a live login.","airmon-ng":"enable Wi-Fi monitor mode.","airodump-ng":"list APs / capture handshakes.","aireplay-ng":"deauth to force a handshake.","aircrack-ng":"crack a WPA2 handshake with a wordlist.",wifite:"automates the aircrack-ng workflow.",netdiscover:"find hosts on the LAN.",tcpdump:"capture live packets.",wireshark:"graphical packet analyser.",searchsploit:"search Exploit-DB offline.",msfconsole:"Metasploit: search->use->set->exploit.",nc:"netcat: connect to any port by hand.",dig:"look up an IP for a name (DNS).",netstat:"list network connections.",traceroute:"show router hops to a host.",ps:"list processes and PIDs.",kill:"sudo kill PID stops a process.",sudo:"run a command as root.",exiftool:"read a photo's hidden metadata.",zgrep:"search inside a gzip (rockyou.txt.gz).",openssl:"openssl rand -base64 N = random password.",decode:"decode OP \"text\" = one cipher step.",sha256sum:"fixed-length file fingerprint.",binwalk:"find files hidden inside files."};if(!t)return out("usage: man <command>   e.g. man nmap","err");out(MAN[t]?("<span class='cy'>"+t+"</span> — "+MAN[t]):("No manual entry for "+t),MAN[t]?"fg":"err");}
 };
 
 /* ---- helpers ---- */
-function ruleBlock(host){
-  out("⛔ BLOCKED by the club's #1 RULE.","err");
-  out("Only test systems you own or have permission to test.","rule");
-  out("Allowed here: <span class='cy'>localhost</span>, your lab (<span class='cy'>10.0.2.15</span>), <span class='cy'>scanme.nmap.org</span>, and NULL's node (agency-authorised).","rule");
-  teach("<b>Permission</b> is the line between a defender and an attacker — same tool, the 'yes' makes you one of the good ones.");
-}
-function answerScenario(ans){
-  if(M().id!==6)return out("Nothing to answer here. Type <span class='cy'>scenario</span> inside Mission 6.","muted");
-  if(S.scenIdx>=SCEN.length)return out("All scenarios answered.","ok");
-  const sc=SCEN[S.scenIdx];
-  if(ans===sc.a){out("✓ "+ans.toUpperCase()+" — correct.","ok");out(sc.why,"fg");setFlag("s"+S.scenIdx);S.scenIdx++;if(S.scenIdx<SCEN.length)out("Type <span class='cy'>scenario</span> for the next one.","muted");}
-  else{out("Not quite — think again.","warn");out("Hint: "+sc.why.replace(/<[^>]+>/g,""),"muted");}
-}
-function leakCount(w){
-  const known={"biscuit":3498,"password1":2167248,"123456":290729,"password":99820,"qwerty123":9512,"iloveyou":84231,"12345678":123289,"p@ssw0rd!":41,"tr0ub!e":2,"kali":118};
-  const k=w.toLowerCase();if(k in known)return known[k];
-  if((w.match(/-/g)||[]).length>=2||w.length>=15)return 0;
-  if(/^\d{1,8}$/.test(w))return 50000;
-  if(w.length<=8&&/^[a-z]+$/.test(k))return 1200;
-  return 0;
-}
-function pseudoHash(s){let h=2166136261>>>0,out="";for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}for(let i=0;i<64;i++){h^=h<<13;h^=h>>>17;h^=h<<5;h>>>=0;out+=(h%16).toString(16);}return out;}
-function banner(t){
-  const F={A:["▄▀█","█▀█","▀ ▀"],B:["█▀▄","█▀▄","▀▀ "],C:["█▀▀","█  ","▀▀▀"],D:["█▀▄","█ █","▀▀ "],E:["█▀▀","█▀▀","▀▀▀"],F:["█▀▀","█▀▀","▀  "],G:["█▀▀","█ █","▀▀▀"],H:["█ █","█▀█","▀ ▀"],I:["█","█","▀"],J:["  █","  █","▀▀ "],K:["█ █","█▀▄","▀ ▀"],L:["█  ","█  ","▀▀▀"],M:["█▄█","█▀█","▀ ▀"],N:["█▄█","█▀█","▀ ▀"],O:["█▀█","█ █","▀▀▀"],P:["█▀█","█▀▀","▀  "],Q:["█▀█","█▄█","▀▀▀"],R:["█▀█","█▀▄","▀ ▀"],S:["█▀▀","▀▀█","▀▀▀"],T:["▀█▀"," █ "," ▀ "],U:["█ █","█ █","▀▀▀"],V:["█ █","█ █"," ▀ "],W:["█ █","█▄█","▀ ▀"],X:["█ █"," █ ","▀ ▀"],Y:["█ █"," █ "," ▀ "],Z:["▀▀█"," ▄▀","▀▀▀"]," ":["  ","  ","  "]};
-  const rows=["","",""];for(const ch of t){const g=F[ch]||F[" "];for(let i=0;i<3;i++)rows[i]+=g[i]+" ";}return rows.join("\n");
-}
+function ruleBlock(host){out("⛔ BLOCKED by the club's #1 RULE.","err");out("Only test systems you own or have permission to test.","rule");out("Allowed: localhost, your lab (10.0.2.0/24), scanme.nmap.org, and agency-authorised NULL targets.","rule");teach("<b>Permission</b> is the line between a defender and an attacker — same tool, the 'yes' makes you one of the good ones.");}
+function apBlock(){out("⛔ BLOCKED — that access point is NOT ours.","err");out("We only audit CLUB-LAB-AP ("+AP.bssid+"). Attacking a neighbour's Wi-Fi is illegal.","rule");teach("Capturing or cracking someone else's Wi-Fi without permission is a crime. Your own network, or written permission — always.");}
+function answerScenario(ans){if(M().id!==6)return out("Type <span class='cy'>scenario</span> inside Mission 6.","muted");if(S.scenIdx>=SCEN.length)return out("All scenarios answered.","ok");const sc=SCEN[S.scenIdx];if(ans===sc.a){out("✓ "+ans.toUpperCase()+" — correct.","ok");out(sc.why,"fg");setFlag("s"+S.scenIdx);S.scenIdx++;if(S.scenIdx<SCEN.length)out("Type <span class='cy'>scenario</span> for the next one.","muted");}else{out("Not quite — think again.","warn");out("Hint: "+sc.why.replace(/<[^>]+>/g,""),"muted");}}
+function leakCount(w){const known={"biscuit":3498,"password1":2167248,"123456":290729,"password":99820,"qwerty123":9512,"iloveyou":84231,"12345678":123289,"p@ssw0rd!":41,"kali":118};const k=w.toLowerCase();if(k in known)return known[k];if((w.match(/-/g)||[]).length>=2||w.length>=15)return 0;if(/^\d{1,8}$/.test(w))return 50000;if(w.length<=8&&/^[a-z]+$/.test(k))return 1200;return 0;}
+function pseudoHash(s){let h=2166136261>>>0,o="";for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)>>>0;}for(let i=0;i<64;i++){h^=h<<13;h^=h>>>17;h^=h<<5;h>>>=0;o+=(h%16).toString(16);}return o;}
+function banner(t){const F={A:["▄▀█","█▀█","▀ ▀"],B:["█▀▄","█▀▄","▀▀ "],C:["█▀▀","█  ","▀▀▀"],D:["█▀▄","█ █","▀▀ "],E:["█▀▀","█▀▀","▀▀▀"],F:["█▀▀","█▀▀","▀  "],G:["█▀▀","█ █","▀▀▀"],H:["█ █","█▀█","▀ ▀"],I:["█","█","▀"],J:["  █","  █","▀▀ "],K:["█ █","█▀▄","▀ ▀"],L:["█  ","█  ","▀▀▀"],M:["█▄█","█▀█","▀ ▀"],N:["█▄█","█▀█","▀ ▀"],O:["█▀█","█ █","▀▀▀"],P:["█▀█","█▀▀","▀  "],Q:["█▀█","█▄█","▀▀▀"],R:["█▀█","█▀▄","▀ ▀"],S:["█▀▀","▀▀█","▀▀▀"],T:["▀█▀"," █ "," ▀ "],U:["█ █","█ █","▀▀▀"],V:["█ █","█ █"," ▀ "],W:["█ █","█▄█","▀ ▀"],X:["█ █"," █ ","▀ ▀"],Y:["█ █"," █ "," ▀ "],Z:["▀▀█"," ▄▀","▀▀▀"]," ":["  ","  ","  "]};const rows=["","",""];for(const ch of t){const g=F[ch]||F[" "];for(let i=0;i<3;i++)rows[i]+=g[i]+" ";}return rows.join("\n");}
 
-/* ======================= Input / dispatch ======================= */
-const ALWAYS=["sudo","help","hint","objective","missions","mission","clear","learn","sitrep","man"];
-function runCommand(text){
-  const parts=text.trim().split(/\s+/),cmd=parts[0].toLowerCase(),args=parts.slice(1);
-  if(!cmd)return;
-  if(S.null.locked[cmd]&&!ALWAYS.includes(cmd)){
-    out("⚠ NULL disabled <span class='err'>"+cmd+"</span>. Restore it: <span class='cy'>sudo repair "+cmd+"</span> (or <span class='cy'>sudo repair all</span>).","warn");return;
-  }
-  if(CMDS[cmd]){try{CMDS[cmd](args,text.trim());}catch(e){out("error: "+e.message,"err");}}
-  else out(cmd+": command not found   (try <span class='cy'>help</span>)","err");
-}
+/* ---- save / restore / restart ---- */
+const SAVEKEY="termhack_save_v2";
+function snapshot(){return JSON.stringify({v:2,mi:S.mi,flags:S.flags,done:MISSIONS.map(m=>m.done),control:S.null.control,locked:S.null.locked,decoys:S.null.decoys,armed:S.armed,scenIdx:S.scenIdx,learn:S.learn});}
+function autosave(){try{localStorage.setItem(SAVEKEY,snapshot());}catch(e){}}
+function applySnapshot(d){S.mi=Math.min(d.mi||0,MISSIONS.length-1);S.flags=d.flags||{};MISSIONS.forEach((m,i)=>m.done=!!(d.done&&d.done[i]));S.null.control=typeof d.control==="number"?d.control:88;S.null.locked=d.locked||{};S.null.decoys=d.decoys||0;S.armed=!!d.armed;S.scenIdx=d.scenIdx||0;S.learn=d.learn!==false;S.mode=null;CWD=HOME.slice();refresh();}
+function resetState(){S.mi=0;S.flags={};S.scenIdx=0;S.openPort=null;S.postsRead=new Set();S.cmdCount=0;S.armed=false;S.mode=null;S.msf={module:null,rhosts:null,lhost:null};S.wifi={mon:false,capturing:false};S.null={control:88,locked:{},decoys:0};MISSIONS.forEach(m=>m.done=false);CWD=HOME.slice();Object.keys(node(HOME)).filter(k=>/^NULL_\d+\.txt$/.test(k)).forEach(k=>delete node(HOME)[k]);refresh();}
+
+/* ===================== Input / dispatch ===================== */
+const ALWAYS=["sudo","help","hint","objective","missions","mission","clear","learn","sitrep","man","tools","save","restore","load","restart"];
+function runCommand(text){const parts=text.trim().split(/\s+/),cmd=parts[0].toLowerCase(),args=parts.slice(1);if(!cmd)return;if(S.null.locked[cmd]&&!ALWAYS.includes(cmd))return out("⚠ NULL disabled <span class='err'>"+cmd+"</span>. Restore it: <span class='cy'>sudo repair "+cmd+"</span> (or <span class='cy'>sudo repair all</span>).","warn");if(CMDS[cmd]){try{CMDS[cmd](args,text.trim());}catch(e){out("error: "+e.message,"err");}}else out(cmd+": command not found   (try <span class='cy'>help</span> or <span class='cy'>tools</span>)","err");}
 function handle(raw){
   out("<span class='ps1' style='color:var(--accent)'>"+esc(ps1())+"</span><span class='fg'>"+esc(raw)+"</span>");
   const text=raw.trim();if(!text)return;
   S.history.push(raw);S.hIdx=S.history.length;S.cmdCount++;
-  if(text.includes("|")){
-    const segs=text.split("|").map(s=>s.trim());
-    if(segs.length===2&&/^grep\s+/.test(segs[1])){
-      const pat=segs[1].replace(/^grep\s+/,"").replace(/^["']|["']$/g,"");
-      CAP=[];try{runCommand(segs[0]);}finally{const cap=CAP;CAP=null;
-        const hits=cap.filter(l=>l.text.toLowerCase().includes(pat.toLowerCase()));
-        if(hits.length)hits.forEach(l=>out(l.html,l.cls));else out("(no match)","muted");}
-      teach("A <b>pipe</b> <span class='cy'>|</span> feeds one command's output into another. <span class='cy'>ps aux | grep nulld</span> = run ps, keep only lines with 'nulld'.");
-    } else runCommand(text);
-  } else runCommand(text);
+  if(S.mode){msfHandle(text);refresh();return;}
+  if(text.includes("|")){const segs=text.split("|").map(s=>s.trim());if(segs.length===2&&/^grep\s+/.test(segs[1])){const pat=segs[1].replace(/^grep\s+/,"").replace(/^["']|["']$/g,"");CAP=[];try{runCommand(segs[0]);}finally{const cap=CAP;CAP=null;const hits=cap.filter(l=>l.text.toLowerCase().includes(pat.toLowerCase()));if(hits.length)hits.forEach(l=>out(l.html,l.cls));else out("(no match)","muted");}teach("A <b>pipe</b> <span class='cy'>|</span> feeds one command's output into another. <span class='cy'>ps aux | grep nulld</span> keeps only lines with 'nulld'.");}else runCommand(text);}
+  else runCommand(text);
   fireRandom();refresh();
 }
-input.addEventListener("keydown",e=>{
-  if(e.key==="Enter"){const v=input.value;input.value="";handle(v);}
-  else if(e.key==="ArrowUp"){if(S.hIdx>0){S.hIdx--;input.value=S.history[S.hIdx]||"";}e.preventDefault();}
-  else if(e.key==="ArrowDown"){if(S.hIdx<S.history.length){S.hIdx++;input.value=S.history[S.hIdx]||"";}e.preventDefault();}
-});
-document.addEventListener("click",()=>input.focus());
+input.addEventListener("keydown",e=>{if(S.booting)return;if(e.key==="Enter"){const v=input.value;input.value="";handle(v);}else if(e.key==="ArrowUp"){if(S.hIdx>0){S.hIdx--;input.value=S.history[S.hIdx]||"";}e.preventDefault();}else if(e.key==="ArrowDown"){if(S.hIdx<S.history.length){S.hIdx++;input.value=S.history[S.hIdx]||"";}e.preventDefault();}});
+document.addEventListener("click",()=>{if(!S.booting)input.focus();});
 
-/* ======================= Boot ======================= */
-out("<div class='banner'>"+esc(banner("TERMHACK"))+"</div>","ok");
-out("Operation NULL — a rogue AI is taking over the internet. You're the newest recruit.","muted");
-blank();
-out("Six training missions build your skills; two final missions take NULL down. Everything you type is a real command.","fg");
-out("Type <span class='cy'>missions</span> to begin, <span class='cy'>help</span> for commands, <span class='cy'>sitrep</span> for the big picture.","warn");
-out("Heads up: NULL will try to <b>sabotage your terminal</b>. Whatever it disables, <span class='cy'>sudo repair all</span> fixes.","mag");
-startMission(0);
+/* ===================== Boot animation ===================== */
+let skip=false;
+function sleep(ms){return new Promise(r=>setTimeout(r,skip?0:ms));}
+async function typeInto(node,text,per){for(let i=0;i<text.length;i++){node.innerHTML+=esc(text[i]);if(!skip&&i%2===0)await sleep(per);}}
+async function boot(){
+  document.getElementById("skip").textContent="press any key to skip";
+  const line=(t,c)=>outNode(t,c);
+  line("SENTINEL BIOS v6.6.1 — (c) Cyber Defense Agency","muted");
+  await sleep(300);
+  line("CPU: QuadCore @ 3.4GHz ...... <span class='ok'>[ OK ]</span>","fg");await sleep(150);
+  line("Memory Test: 2048MB ........ <span class='ok'>[ OK ]</span>","fg");await sleep(150);
+  line("Detecting drives: /dev/sda . <span class='ok'>[ OK ]</span>","fg");await sleep(200);
+  line("Detecting wlan0 (ath9k) .... <span class='ok'>[ OK ]</span>","fg");await sleep(250);
+  blank();
+  const t=outNode("",""); t.className="line cur"; await typeInto(t,"booting SENTINEL OS (Kali Lab Image)...",26); t.classList.remove("cur");
+  await sleep(200);
+  const pb=outNode("[                              ] 0%","muted");
+  for(let p=0;p<=100;p+=5){const fill=Math.round(p*30/100);pb.innerHTML="["+"█".repeat(fill)+" ".repeat(30-fill)+"] "+p+"%";await sleep(skip?0:55);}
+  pb.className="line ok";
+  await sleep(150);
+  line("mount /root ................ <span class='ok'>[ OK ]</span>","fg");await sleep(120);
+  line("start networking: eth0 10.0.2.15 <span class='ok'>[ OK ]</span>","fg");await sleep(160);
+  line("loading toolkit: nmap metasploit aircrack-ng ... <span class='ok'>[ OK ]</span>","fg");await sleep(220);
+  blank();
+  const up=outNode("establishing secure uplink to CYBER DEFENSE AGENCY","cy");up.className="line cy cur";await sleep(500);
+  for(let i=0;i<3;i++){up.innerHTML+=".";await sleep(260);}
+  up.classList.remove("cur");up.innerHTML+=" <span class='ok'>[ CONNECTED ]</span>";
+  await sleep(350);
+  // NULL cameo
+  blank();glitch();
+  const n1=outNode("",""); n1.className="line nullsay cur"; await typeInto(n1,"N U L L // a new recruit? how quaint. i am already everywhere.",22); n1.classList.remove("cur");
+  glitch();await sleep(500);
+  line("⚠ intrusion signature detected on uplink — countermeasures online","warn");await sleep(400);
+  line("authenticating analyst credentials ........ <span class='ok'>[ ACCESS GRANTED ]</span>","ok");
+  await sleep(500);
+  // launch game
+  document.getElementById("skip").textContent="";
+  document.getElementById("topbar").classList.remove("hidden");
+  document.getElementById("promptrow").classList.remove("hidden");
+  screen.innerHTML="";
+  out("<div class='banner'>"+esc(banner("TERMHACK"))+"</div>","ok");
+  out("Operation NULL — a rogue AI is taking over the internet. You're the newest recruit.","muted");
+  blank();
+  out("13 missions: six build your skills, seven take NULL down. Everything you type is a real command.","fg");
+  out("Start with <span class='cy'>missions</span> · <span class='cy'>help</span> for commands · <span class='cy'>tools</span> for the full kit · <span class='cy'>sitrep</span> for the big picture.","warn");
+  out("Heads up: NULL will try to <b>sabotage your terminal</b>. Whatever it disables, <span class='cy'>sudo repair all</span> fixes.","mag");
+  out("Progress saves to this browser: <span class='cy'>save</span> / <span class='cy'>restore</span> / <span class='cy'>restart confirm</span> anytime.","muted");
+  let hasSave=false;try{hasSave=!!localStorage.getItem(SAVEKEY);}catch(e){}
+  S.booting=false;
+  if(hasSave){blank();out("★ Saved progress found — type <span class='cy'>restore</span> to pick up where you left off, or carry on below to start fresh.","warn");}
+  startMission(0);
+  input.focus();
+}
+document.addEventListener("keydown",()=>{if(S.booting)skip=true;},{once:false});
+boot();
 </script>
 </body>
 </html>
