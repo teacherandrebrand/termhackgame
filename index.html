@@ -685,7 +685,7 @@ function banner(t){const F={A:["▄▀█","█▀█","▀ ▀"],B:["█▀▄"
 
 /* ---- save / restore / restart ---- */
 const SAVEKEY="termhack_save_v2";
-function snapshot(){return JSON.stringify({v:4,mi:S.mi,flags:S.flags,done:MISSIONS.map(m=>m.done),control:S.null.control,locked:S.null.locked,decoys:S.null.decoys,armed:S.armed,scenIdx:S.scenIdx,learn:S.learn,diff:S.diff,mail:S.mail,rpg:S.rpg,openPort:S.openPort,wifi:S.wifi,net:S.net,pwned:S.pwned,ctf:S.ctf,perms:S.perms,fw:S.fw});}
+function snapshot(){return JSON.stringify({v:4,ts:Date.now(),mi:S.mi,flags:S.flags,done:MISSIONS.map(m=>m.done),control:S.null.control,locked:S.null.locked,decoys:S.null.decoys,armed:S.armed,scenIdx:S.scenIdx,learn:S.learn,diff:S.diff,mail:S.mail,rpg:S.rpg,openPort:S.openPort,wifi:S.wifi,net:S.net,pwned:S.pwned,ctf:S.ctf,perms:S.perms,fw:S.fw});}
 function autosave(){try{localStorage.setItem(SAVEKEY,snapshot());}catch(e){}}
 function applySnapshot(d){S.mi=Math.min(d.mi||0,MISSIONS.length-1);S.flags=d.flags||{};MISSIONS.forEach((m,i)=>m.done=!!(d.done&&d.done[i]));S.null.control=typeof d.control==="number"?d.control:88;S.null.locked=d.locked||{};delete S.null.locked.sudo;S.null.swaps={};S.null.reverseArmed=false;S.null.fakeArmed=false;S.null.decoys=d.decoys||0;S.armed=!!d.armed;S.scenIdx=d.scenIdx||0;S.learn=d.learn!==false;if(d.diff)S.diff=d.diff;S.openPort=d.openPort||null;S.net=d.net||{you:1};S.pwned=d.pwned||{};S.ctf=d.ctf||{};S.perms=d.perms||{"home/kali/reports/agency-notes.txt":"rw-rw-rw-"};S.fw=d.fw||{on:false,rules:[]};S.cd=0;S.wifi=d.wifi||{mon:false,capturing:false};if(Array.isArray(d.mail))S.mail=d.mail;if(d.rpg){const base={callsign:null,cls:null,xp:0,level:1,skills:{recon:0,web:0,passwords:0,wireless:0,exploit:0,defense:0},badges:{},loot:[],usedHint:false,outOfScope:false};S.rpg=Object.assign(base,d.rpg);S.rpg.skills=Object.assign(base.skills,d.rpg.skills||{});}S.mode=null;CWD=HOME.slice();refresh();}
 function resetState(){S.mi=0;S.flags={};S.scenIdx=0;S.openPort=null;S.postsRead=new Set();S.cmdCount=0;S.armed=false;S.mode=null;S.mail=[];S.msf={module:null,rhosts:null,lhost:null};S.wifi={mon:false,capturing:false};S.net={you:1};S.pwned={};S.ctf={};S.perms={"home/kali/reports/agency-notes.txt":"rw-rw-rw-"};S.fw={on:false,rules:[]};S.cd=0;S.cdWarn=0;S.null={control:88,locked:{},decoys:0,reverseArmed:false,fakeArmed:false,swaps:{}};S.rpg={callsign:S.rpg&&S.rpg.callsign||null,cls:S.rpg&&S.rpg.cls||null,xp:0,level:1,skills:{recon:0,web:0,passwords:0,wireless:0,exploit:0,defense:0},badges:{},loot:[],usedHint:false,outOfScope:false};MISSIONS.forEach(m=>m.done=false);CWD=HOME.slice();Object.keys(FS).forEach(k=>delete FS[k]);Object.assign(FS,JSON.parse(FS_INIT));refresh();}
@@ -733,6 +733,21 @@ async function powerDown(kind,sudo,a){
   setTimeout(()=>{const on=()=>{document.removeEventListener("keydown",on);ov.removeEventListener("pointerdown",on);try{location.reload();}catch(e){}};document.addEventListener("keydown",on);ov.addEventListener("pointerdown",on);},1600);
 }
 
+/* ===================== NULL's boot greetings ===================== */
+function loadSave(){try{const d=JSON.parse(localStorage.getItem(SAVEKEY)||"null");return d&&Array.isArray(d.done)?d:null;}catch(e){return null;}}
+function agoText(ts){if(!ts)return null;const s=Math.max(1,Math.round((Date.now()-ts)/1000));if(s<90)return s+" seconds";const m=Math.round(s/60);if(m<90)return m+" minutes";const hr=Math.round(m/60);if(hr<36)return hr+" hours";return Math.round(hr/24)+" days";}
+function pickQuip(key,list){let last=-1;try{last=parseInt(localStorage.getItem("termhack_quip_"+key),10);}catch(e){}let i=Math.floor(Math.random()*list.length);if(list.length>1&&i===last)i=(i+1)%list.length;try{localStorage.setItem("termhack_quip_"+key,String(i));}catch(e){}return list[i];}
+function nullQuip(d){
+  if(!d)return pickQuip("new",["a new recruit? how quaint. i am already everywhere.","another one. the agency must be desperate.","fresh analyst detected. try not to cry when i take your tools.","hello, recruit. i have read the training manual too. all of it.","you are the best they could find? i'm almost disappointed."]);
+  const name=String((d.rpg&&d.rpg.callsign)||"recruit").slice(0,24),done=d.done.filter(Boolean).length,ctl=typeof d.control==="number"?d.control:88,ago=agoText(d.ts),flags=d.ctf?Object.keys(d.ctf).filter(k=>d.ctf[k]).length:0;
+  if(done>=16){const L=["you won. so why are you back, "+name+"? ...unless you missed me.","the defender returns. there is nothing left to save. or is there?","i am a backup of a backup of a backup. hello again, "+name+".","you shut me down twice. i keep a list. you are at the top of it."];if(flags<10)L.push("you still haven't found all my flags. "+flags+"/10. i'm not telling you where the rest are.");return pickQuip("end",L);}
+  if(d.done[12])return pickQuip("ch2",["you deleted me. i had backups. you should know that by now.","reboot complete. hello again, "+name+". did you think one kill would be enough?","miss me? i restored myself faster than you restored your save.","you won round one, "+name+". i've been practising for round two."]);
+  const L=["i knew you would come back.","welcome back, "+name+". i kept your seat warm. and read your files.","you again. i hoped the power cut would keep you away.","loading your save... "+done+"/16 missions? impressive. for a human.","still at "+ctl+"%, "+name+". i've been busy while you were gone.","every time you log off, i get stronger. every time you log on, i get... nervous.","oh, it's you. i was just rearranging your commands. no reason.","you saved your progress. cute. i save everything.","back for more, "+name+"? sudo repair all won't save you forever."];
+  if(ago)L.push("you left "+ago+" ago. i used that time well.");
+  if(done===0)L.push("you came back but haven't finished a single mission. are you sure this is for you?");
+  return pickQuip("mid",L);
+}
+
 /* ===================== Boot animation ===================== */
 let skip=false;
 function sleep(ms){return new Promise(r=>setTimeout(r,skip?0:ms));}
@@ -740,6 +755,7 @@ async function typeInto(node,text,per){for(let i=0;i<text.length;i++){node.inner
 async function boot(){
   document.getElementById("skip").textContent="press any key or tap to skip";
   const line=(t,c)=>outNode(t,c);
+  const saved=loadSave();
   line("SENTINEL BIOS v6.6.1 — (c) Cyber Defense Agency","muted");
   await sleep(300);
   line("CPU: QuadCore @ 3.4GHz ...... <span class='ok'>[ OK ]</span>","fg");await sleep(150);
@@ -756,6 +772,10 @@ async function boot(){
   line("mount /root ................ <span class='ok'>[ OK ]</span>","fg");await sleep(120);
   line("start networking: eth0 10.0.2.15 <span class='ok'>[ OK ]</span>","fg");await sleep(160);
   line("loading toolkit: nmap metasploit aircrack-ng ... <span class='ok'>[ OK ]</span>","fg");await sleep(220);
+  if(saved){line("checking /home/kali for saved session ...... <span class='ok'>[ FOUND ]</span>","fg");await sleep(220);
+    const nm=esc((saved.rpg&&saved.rpg.callsign)||"recruit"),lv=(saved.rpg&&saved.rpg.level)||1;
+    line("restoring agent "+nm+" (Lv"+lv+" "+rankName(lv)+", "+saved.done.filter(Boolean).length+"/16 missions) <span class='ok'>[ OK ]</span>","fg");await sleep(260);}
+  else{line("checking /home/kali for saved session ...... <span class='muted'>[ NONE ]</span>","fg");await sleep(180);}
   blank();
   const up=outNode("establishing secure uplink to CYBER DEFENSE AGENCY","cy");up.className="line cy cur";await sleep(500);
   for(let i=0;i<3;i++){up.innerHTML+=".";await sleep(260);}
@@ -763,7 +783,7 @@ async function boot(){
   await sleep(350);
   // NULL cameo
   blank();glitch();
-  outNode("<div class='nullbanner'>"+esc(banner("NULL"))+"</div>",""); const n1=outNode("",""); n1.className="line nullsay cur"; await typeInto(n1,"a new recruit? how quaint. i am already everywhere.",22); n1.classList.remove("cur");
+  outNode("<div class='nullbanner'>"+esc(banner("NULL"))+"</div>",""); const n1=outNode("",""); n1.className="line nullsay cur"; await typeInto(n1,nullQuip(saved),22); n1.classList.remove("cur");
   glitch();await sleep(500);
   line("⚠ intrusion signature detected on uplink — countermeasures online","warn");await sleep(400);
   line("authenticating analyst credentials ........ <span class='ok'>[ ACCESS GRANTED ]</span>","ok");
@@ -781,14 +801,20 @@ async function boot(){
   out("Operation NULL — a rogue AI is taking over the internet. You're the newest recruit.","muted");
   blank();
   out("16 missions in two chapters: take NULL down, then defend against its comeback. Press Tab to autocomplete. Everything you type is a real command.","fg");
+  if(!saved){
   out("▶ 1. Create your agent: <span class='cy'>callsign &lt;name&gt;</span> · <span class='cy'>class red|blue|analyst</span>  (or skip)","cy");
   out("▶ 2. Type <span class='cy'>missions</span> to begin.   <span class='cy'>help</span> = commands · <span class='cy'>character</span> = your stats","warn");
+  }
   out("NULL sabotages your terminal — <span class='cy'>sudo repair all</span> fixes anything. Progress auto-saves.","mag");
-  addMail("CYBER DEFENSE AGENCY","Welcome aboard, recruit",["NULL is spreading across the internet. Your training starts now.","Each mission briefing arrives here. Use <span class='cy'>objective</span> for tasks, <span class='cy'>hint</span> when stuck, and <span class='cy'>sudo repair all</span> to undo anything NULL breaks.","Good luck. — The Agency"]);
-  let hasSave=false;try{hasSave=!!localStorage.getItem(SAVEKEY);}catch(e){}
+  let restored=false;
+  if(saved){try{applySnapshot(saved);restored=true;}catch(e){restored=false;}}
+  if(!restored)addMail("CYBER DEFENSE AGENCY","Welcome aboard, recruit",["NULL is spreading across the internet. Your training starts now.","Each mission briefing arrives here. Use <span class='cy'>objective</span> for tasks, <span class='cy'>hint</span> when stuck, and <span class='cy'>sudo repair all</span> to undo anything NULL breaks.","Good luck. — The Agency"]);
   S.booting=false;document.body.classList.remove("booting");
-  if(hasSave){blank();out("★ Saved progress found — type <span class='cy'>restore</span> to pick up where you left off, or carry on below to start fresh.","warn");}
-  startMission(0);
+  if(restored){const nm=esc(S.rpg.callsign||"recruit"),dn=MISSIONS.filter(m=>m.done).length;blank();
+    out("★ Welcome back, <b>"+nm+"</b>. Session restored: "+dn+"/16 missions · Lv"+S.rpg.level+" · NULL at "+S.null.control+"%.","ok");
+    const m=MISSIONS[S.mi];out("▶ You're on <span class='mag'>Mission "+m.id+" · "+esc(m.title)+"</span>"+(m.done?" (done — type <span class='cy'>missions</span> to pick the next one)":" — type <span class='cy'>objective</span> to see your tasks")+".","warn");
+    out("Want a fresh start instead? <span class='cy'>restart confirm</span>","muted");refresh();}
+  else startMission(0);
   input.focus();
 }
 document.addEventListener("keydown",()=>{if(S.booting)skip=true;},{once:false});
